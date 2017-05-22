@@ -89,7 +89,7 @@ from common import *
 #     bot = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
 #     return top + bot
 
-PREC = 6
+PREC = 20
 PRMUL = 1 << PREC
 def triangle(x1, y1, x2, y2, x3, y3):
     if x1 == 225 or x2 == 225 or x3 == 225:

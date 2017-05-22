@@ -11,6 +11,7 @@ import time
 
 EDGE = 2
 POLY = 3
+ka = Texture(True,
 draw = lambda *t: drawObjectsNicely(*t, shader=phongShader)
 def err(s):
     print 'ERROR\n'+s
@@ -20,7 +21,7 @@ def warn(s):
     print 'Warning\n'+s
 
 
-
+@profile
 def runFrame(frame, commands):
     step = 0.02
     cstack = [TransMatrix()]
