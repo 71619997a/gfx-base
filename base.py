@@ -85,7 +85,7 @@ class Image(object):
                 return img
 
 def makeAnimation(name, format='png'):
-        os.system('convert anim/%s*.%s %s.gif' % (name, format, name))
+        os.system('convert -delay 2 anim/%s*.%s %s.gif' % (name, format, name))
 
 def clearAnim():
         os.system('rm anim/*')
