@@ -94,10 +94,12 @@ def runFrame(frame, commands):
             #objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'torus':
-            vxs = cstack[-1] * shape.genTorusPoints(*command[1:6]+(step,step))
+            vxs = shape.genTorusPoints(*command[1:6]+(step,step))
             tris = shape.genTorusTris(step,step)
             shape.fixOverlaps(vxs, tris)
-            objects.append((POLY, autoTrianglesFromVT(vxs, tris)))
+            pts = list(trianglesFromVTNT(vxs, tris))
+            cstack[-1]*pts
+            objects.append((POLY, pts))
             #polys = edgemtx()
             #shape.addTorus(*(polys,) + command[1:6] + (.05, .05))
             #polys = cstack[-1] * polys
