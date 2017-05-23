@@ -36,23 +36,24 @@ class TransMatrix(object):
                         x = self.lst[0][3] + pt.x*self.lst[0][0] + pt.y*self.lst[0][1] + pt.z*self.lst[0][2]
                         y = self.lst[1][3] + pt.x*self.lst[1][0] + pt.y*self.lst[1][1] + pt.z*self.lst[1][2]
                         z = self.lst[2][3] + pt.x*self.lst[2][0] + pt.y*self.lst[2][1] + pt.z*self.lst[2][2]
-                        nx = self.inv[0][3] + pt.nx*self.inv[0][0] + pt.ny*self.inv[0][1] + pt.nz*self.inv[0][2]
-                        ny = self.inv[1][3] + pt.nx*self.inv[1][0] + pt.ny*self.inv[1][1] + pt.nz*self.inv[1][2]
-                        nz = self.inv[2][3] + pt.nx*self.inv[2][0] + pt.ny*self.inv[2][1] + pt.nz*self.inv[2][2]
+                        nx = self.inv[3][0] + pt.nx*self.inv[0][0] + pt.ny*self.inv[1][0] + pt.nz*self.inv[2][0]
+                        ny = self.inv[3][1] + pt.nx*self.inv[0][1] + pt.ny*self.inv[1][1] + pt.nz*self.inv[2][1]
+                        nz = self.inv[3][2] + pt.nx*self.inv[0][2] + pt.ny*self.inv[1][2] + pt.nz*self.inv[2][2]
                         pt.x, pt.y, pt.z = x, y, z
-                        pt.nx, pt.ny, pt.nz = normalizedTuple(nx, ny, nz)
-                        
-            newls = []
-            for pt in mat:
-                nx = self.lst[0][3]
-                ny = self.lst[1][3]
-                nz = self.lst[2][3]
-                for i in range(3):
-                    nx += self.lst[0][i] * pt[i]
-                    ny += self.lst[1][i] * pt[i]
-                    nz += self.lst[2][i] * pt[i]
-                newls.append((nx,ny,nz))
-            return newls
+                        pt.nx, pt.ny, pt.nz = normalizedTuple((nx, ny, nz))
+                return mat
+            else:
+                newls = []
+                for pt in mat:
+                    nx = self.lst[0][3]
+                    ny = self.lst[1][3]
+                    nz = self.lst[2][3]
+                    for i in range(3):
+                        nx += self.lst[0][i] * pt[i]
+                        ny += self.lst[1][i] * pt[i]
+                        nz += self.lst[2][i] * pt[i]
+                    newls.append((nx,ny,nz))
+                return newls
         else:  # matrix
             return matrix.multiply(self.lst, mat)
 

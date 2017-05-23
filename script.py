@@ -16,6 +16,7 @@ POLY = 3
 ka = kd = Texture(True, (0,0,0), 'jupiter.png')
 ks = Texture(False, (30, 30, 10))
 mat = Material(ka, kd, ks, 4)
+lights = render.niceLights + [Light(500, 0, 200, (30, 10, 10), (128, 30, 30), (255, 180, 180))]
 
 def err(s):
     print 'ERROR\n'+s
@@ -84,7 +85,7 @@ def runFrame(frame, commands):
             vxs = shape.genSpherePoints(*command[1:5]+(step,))
             tris = shape.genSphereTris(step)
             shape.fixOverlaps(vxs, tris)
-            pts = trianglesFromVTNT(vxs, tris)
+            pts = list(trianglesFromVTNT(vxs, tris))
             cstack[-1]*pts
             objects.append((POLY, pts))
             #polys = edgemtx()
@@ -110,6 +111,7 @@ def runFrame(frame, commands):
 
 
 def run(filename):
+    clearAnim()
     """
     This function runs an mdl script
     """
@@ -167,7 +169,7 @@ def run(filename):
         print 'Pass 2 complete, beginning image rendering...'
         a = time.time()
         tc = {}
-        draw = lambda *t: drawObjectsNicely(*t, shader=phongShader, mat=mat, texcache=tc)
+        draw = lambda *t: drawObjectsNicely(*t, shader=phongShader, mat=mat, texcache=tc, lights=lights)
         i = 0
         for frame in frameList:
             print 'Rendering frame %d...'%(i)

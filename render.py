@@ -67,12 +67,12 @@ def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
         Lmn = Lmx * nx + Lmy * ny + Lmz * nz
         Rmx = 2 * Lmn * nx - Lmx
         Rmy = 2 * Lmn * ny - Lmy
-        Rmz = 2 * Lmn * nz - Lmz    
+        Rmz = 2 * Lmn * nz - Lmz
         diff = max(Lmn, 0)
         try:
             spec = max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0)**a
         except:
-            spec = 1 
+            spec = 1
         for i in xrange(3):
             c[i] += Ka[i]*l.Ia[i] + Kd[i]*l.Id[i]*diff + Ks[i]*l.Is[i]*spec
     for i in xrange(3):
@@ -157,7 +157,7 @@ def drawObjects(objects, img):
 def addIP(a, v):
     for i in xrange(len(v)):
         a[i] += v[i]
-            
+
 def genVertexNorms(vxs, tris):
     norms = [[0,0,0] for _ in vxs]
     for p1, p2, p3 in tris:
@@ -181,7 +181,7 @@ def genVertexNorms(vxs, tris):
             norms[i] = normalizedTuple(n)
         else:
             norms[i] = (1.,0.,0.)
-    return norms           
+    return norms
 
 def genTCs(norms):
     return [(math.asin(n[0])/math.pi+0.5, math.asin(n[1])/math.pi+0.5) for n in norms]
@@ -198,8 +198,8 @@ def getPointsFromTriangles(m):  # assumes m is a poly mtx
             n3 = normalizeList(cross(-v23x, -v23y, -v23z, v31x, v31y, v31z))
         except ZeroDivisionError:
             continue
-        yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0), 
-               Point(m[0][i+1], m[1][i+1], m[2][i+1], n2[0], n2[1], n2[2], 0, 0), 
+        yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0),
+               Point(m[0][i+1], m[1][i+1], m[2][i+1], n2[0], n2[1], n2[2], 0, 0),
                Point(m[0][i+2], m[1][i+2], m[2][i+2], n3[0], n3[1], n3[2], 0, 0))
 
 def trianglesFromVTNT(vxs, tris, norms=None, tcs=None):
@@ -226,14 +226,14 @@ def flatTrisFromVT(vxs, tris):  # for surface norms
         except ZeroDivisionError:
             continue
         yield (
-            Point(*v1 + n + (0,0)), 
+            Point(*v1 + n + (0,0)),
             Point(*v2 + n + (0,0)),
             Point(*v3 + n + (0,0)))
 
-        
+
 def autoTrianglesFromVT(vxs, tris):  # for vertex norms
     return trianglesFromVTNT(vxs, tris, genVertexNorms(vxs, tris))
-            
+
 dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (150, 150, 150)), 10)
 niceLights = [
     # Light(750, -3000, 750, (70, 65, 60), (200, 180, 160), (255, 230, 210)),  # sun at just past noon
@@ -456,7 +456,7 @@ def sphinput():
 def marioshadetest():
     img = Image(500, 500)
     # TODO implement lights, texcache, zbuf
-    lights = [Light(409.1, 409.1, 0, (30, 10, 10), (200, 50, 50), (255, 150, 150)), 
+    lights = [Light(409.1, 409.1, 0, (30, 10, 10), (200, 50, 50), (255, 150, 150)),
         Light(25, 250, 50, (5, 30, 10), (50, 200, 50), (150, 255, 150)),
         Light(250, 25, 100, (10, 20, 30), (50, 50, 200), (150, 150, 255))]
     fov = 90
@@ -526,8 +526,8 @@ def triIter(m):
                 j[k] *= 250./m[3][i + x]
             x += 1
         yield t
-        
-    
+
+
 def camtest():
     import shape
     fov = 100
@@ -614,7 +614,7 @@ def camtest():
                 nls += line(pt[0], pt[1], pt[0] + normt[j][0]*20, pt[1] + normt[j][1]*20)
                 print normt[j][0], normt[j][1]
                 img.setPixels([p + ((0,255,0),) for p in nls])
-        
+
         img.savePpm('cube/%d.ppm'%(i))
         tris = tmat * tris
         norms = nrot * norms
@@ -622,4 +622,3 @@ def camtest():
         print i, (time() - a) * 1000, 'ms'
 if __name__ == '__main__':
     camtest()
-    
