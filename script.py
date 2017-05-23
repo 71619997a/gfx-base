@@ -84,9 +84,9 @@ def runFrame(frame, commands):
             vxs = shape.genSpherePoints(*command[1:5]+(step,))
             tris = shape.genSphereTris(step)
             shape.fixOverlaps(vxs, tris)
-            tcs = render.genTCs(render.genVertexNorms(vxs, tris))
-            vxs = cstack[-1]*vxs
-            objects.append((POLY, trianglesFromVTNT(vxs, tris, tcs=tcs)))
+            pts = trianglesFromVTNT(vxs, tris)
+            cstack[-1]*pts
+            objects.append((POLY, pts))
             #polys = edgemtx()
             #shape.addSphere(*(polys,) + command[1:5] + (.05,))
             #polys = cstack[-1] * polys

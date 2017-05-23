@@ -71,15 +71,22 @@ def T(a, b, c):
     mat.inv[2][3] = -c
     return mat
 
+_inf = 1e33
+def _rc(x):
+    try:
+        return 1./x
+    except ZeroDivisionError:
+        return _inf
+
 
 def S(a, b, c):
     mat = TransMatrix()
     mat[0][0] = a
     mat[1][1] = b
     mat[2][2] = c
-    mat.inv[0][0] = 1./a
-    mat.inv[1][1] = 1./b
-    mat.inv[2][2] = 1./c
+    mat.inv[0][0] = _rc(a)
+    mat.inv[1][1] = _rc(b)
+    mat.inv[2][2] = _rc(c)
     return mat
 
 
