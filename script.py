@@ -3,16 +3,20 @@ from transform import TransMatrix
 import transform
 from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
 from base import Image, makeAnimation, clearAnim
-from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects, autoTrianglesFromVT, flatTrisFromVT
+from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects, autoTrianglesFromVT, flatTrisFromVT, trianglesFromVTNT
 import render
 import shape
 from sys import argv
 import time
+from common import *
+
 
 EDGE = 2
 POLY = 3
-ka = Texture(True,
-draw = lambda *t: drawObjectsNicely(*t, shader=phongShader)
+ka = kd = Texture(True, (0,0,0), 'jupiter.png')
+ks = Texture(False, (30, 30, 10))
+mat = Material(ka, kd, ks, 4)
+
 def err(s):
     print 'ERROR\n'+s
     exit(1)
@@ -21,7 +25,6 @@ def warn(s):
     print 'Warning\n'+s
 
 
-@profile
 def runFrame(frame, commands):
     step = 0.02
     cstack = [TransMatrix()]
@@ -78,10 +81,12 @@ def runFrame(frame, commands):
             #objects.append((POLY, polys))
             #drawTriangles(cstack[-1] * polys, img, wireframe=True)
         elif inp == 'sphere':
-            vxs = cstack[-1] * shape.genSpherePoints(*command[1:5]+(step,))
+            vxs = shape.genSpherePoints(*command[1:5]+(step,))
             tris = shape.genSphereTris(step)
             shape.fixOverlaps(vxs, tris)
-            objects.append((POLY, autoTrianglesFromVT(vxs, tris)))
+            tcs = render.genTCs(render.genVertexNorms(vxs, tris))
+            vxs = cstack[-1]*vxs
+            objects.append((POLY, trianglesFromVTNT(vxs, tris, tcs=tcs)))
             #polys = edgemtx()
             #shape.addSphere(*(polys,) + command[1:5] + (.05,))
             #polys = cstack[-1] * polys
@@ -161,11 +166,16 @@ def run(filename):
         # pass for each frame
         print 'Pass 2 complete, beginning image rendering...'
         a = time.time()
+        tc = {}
+        draw = lambda *t: drawObjectsNicely(*t, shader=phongShader, mat=mat, texcache=tc)
+        i = 0
         for frame in frameList:
+            print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands)
             img = Image(500, 500)
             draw(objects, img)
             imgs.append(img)
+            i += 1
         print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         print 'Saving images...'
         a = time.time()

@@ -202,8 +202,11 @@ def getPointsFromTriangles(m):  # assumes m is a poly mtx
                Point(m[0][i+1], m[1][i+1], m[2][i+1], n2[0], n2[1], n2[2], 0, 0), 
                Point(m[0][i+2], m[1][i+2], m[2][i+2], n3[0], n3[1], n3[2], 0, 0))
 
-def trianglesFromVTN(vxs, tris, norms):
-    tcs = genTCs(norms)
+def trianglesFromVTNT(vxs, tris, norms=None, tcs=None):
+    if norms is None:
+        norms = genVertexNorms(vxs, tris)
+    if tcs is None:
+        tcs = genTCs(norms)
     for a,b,c in tris:
         yield (
             Point(*vxs[a]+norms[a]+tcs[a]),
@@ -229,7 +232,7 @@ def flatTrisFromVT(vxs, tris):  # for surface norms
 
         
 def autoTrianglesFromVT(vxs, tris):  # for vertex norms
-    return trianglesFromVTN(vxs, tris, genVertexNorms(vxs, tris))
+    return trianglesFromVTNT(vxs, tris, genVertexNorms(vxs, tris))
             
 dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (150, 150, 150)), 10)
 niceLights = [
@@ -241,14 +244,14 @@ def normMapShader(x, y, z, nx, ny, nz, *_):
     return [int(nx * 127.5 + 127.5), int(ny * 127.5 + 127.5), int(nz * 127.5 + 127.5)]
 
 
-def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=phongShader):
+def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=phongShader, texcache={}):
     zbuf = [[None] * 500 for _ in xrange(500)]
     for type, points in objects:
         if type == EDGE:
             drawEdges(mtx, img)
         elif type == POLY:
             for pts in points:
-                img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, {}, zbuf), shader=shader))
+                img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, texcache, zbuf), shader=shader))
                 # border = line(pts[0].x, pts[0].y, pts[1].x, pts[1].y)
                 # border += line(pts[1].x, pts[1].y, pts[2].x, pts[2].y)
                 # border += line(pts[2].x, pts[2].y, pts[0].x, pts[0].y)

@@ -9,10 +9,13 @@ EDGE = 2
 POLY = 3
 
 class TransMatrix(object):
-    def __init__(self, lst=-1):
+    def __init__(self, lst=-1, inv=-1):
         self.lst = matrix.id(4)
+        self.inv = matrix.id(4)
         if lst != -1:
             self.lst = lst
+        if inv != -1:
+            self.inv = inv
 
     def __getitem__(self, i):
         return self.lst[i]
@@ -25,8 +28,20 @@ class TransMatrix(object):
 
     def __mul__(self, mat):
         if isinstance(mat, TransMatrix):
-            return TransMatrix(matrix.multiply(self.lst, mat.lst))
+            return TransMatrix(matrix.multiply(self.lst, mat.lst), matrix.multiply(mat.inv, self.inv))
         elif isinstance(mat[0], tuple):  # point list (x,y,z)
+            if isinstance(mat[0][0], Point):  # big p, in place
+                for tri in mat:
+                    for pt in tri:
+                        x = self.lst[0][3] + pt.x*self.lst[0][0] + pt.y*self.lst[0][1] + pt.z*self.lst[0][2]
+                        y = self.lst[1][3] + pt.x*self.lst[1][0] + pt.y*self.lst[1][1] + pt.z*self.lst[1][2]
+                        z = self.lst[2][3] + pt.x*self.lst[2][0] + pt.y*self.lst[2][1] + pt.z*self.lst[2][2]
+                        nx = self.inv[0][3] + pt.nx*self.inv[0][0] + pt.ny*self.inv[0][1] + pt.nz*self.inv[0][2]
+                        ny = self.inv[1][3] + pt.nx*self.inv[1][0] + pt.ny*self.inv[1][1] + pt.nz*self.inv[1][2]
+                        nz = self.inv[2][3] + pt.nx*self.inv[2][0] + pt.ny*self.inv[2][1] + pt.nz*self.inv[2][2]
+                        pt.x, pt.y, pt.z = x, y, z
+                        pt.nx, pt.ny, pt.nz = normalizedTuple(nx, ny, nz)
+                        
             newls = []
             for pt in mat:
                 nx = self.lst[0][3]
@@ -51,6 +66,9 @@ def T(a, b, c):
     mat[0][3] = a
     mat[1][3] = b
     mat[2][3] = c
+    mat.inv[0][3] = -a
+    mat.inv[1][3] = -b
+    mat.inv[2][3] = -c
     return mat
 
 
@@ -59,10 +77,13 @@ def S(a, b, c):
     mat[0][0] = a
     mat[1][1] = b
     mat[2][2] = c
+    mat.inv[0][0] = 1./a
+    mat.inv[1][1] = 1./b
+    mat.inv[2][2] = 1./c
     return mat
 
 
-def R(axis, t):
+def R(axis, t, inv=True):
     mat = TransMatrix()
     c = cos(t)
     s = sin(t)
@@ -81,6 +102,8 @@ def R(axis, t):
         mat[0][2] = s
         mat[2][0] = -s
         mat[2][2] = c
+    if inv:
+        mat.inv = R(axis, -t, False).lst
     return mat
 
 
