@@ -169,7 +169,7 @@ def C3(r,t,n,f):
     return mat
 
 def V(cam):
-    return R('z', -cam.dx) * R('y', -cam.dy) * R('z', -cam.dz) * T(-cam.x, -cam.y, -cam.z)
+    return R('x', -cam.dx) * R('y', -cam.dy) * R('z', -cam.dz) * T(-cam.x, -cam.y, -cam.z)
 
 def perspective(wx, wy, n, f=None):
     mat = TransMatrix()
@@ -200,9 +200,9 @@ def lookat(cam, x, y, z):
     x -= cam.x
     y -= cam.y
     z -= cam.z
-    cam.dx = atan2(z, y)
-    cam.dy = atan2(x, z)
-    cam.dz = atan2(y, x)
+    cam.dx = 180/math.pi * math.atan2(z, y) + 90
+    cam.dy = 180/math.pi * math.atan2(x, z) - 180
+    cam.dz = 180/math.pi * math.atan2(y, x) + 90
 
 
 '''

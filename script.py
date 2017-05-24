@@ -28,7 +28,8 @@ def warn(s):
 
 def runFrame(frame, commands):
     step = 0.05
-    cstack = [transform.scale(250,250,250)*transform.T(1,1,1)*transform.perspective(math.atan(45), math.atan(45), 50) * transform.V(cam)]
+    cstack = [transform.T(250, 250, 0) * transform.V(cam)] # transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(math.tan(math.pi/4), math.atan(math.pi/4), 50, 2000) *
+    print cstack[0]
     img = Image(500, 500)
     objects = []
     for command in commands:
@@ -114,6 +115,7 @@ def runFrame(frame, commands):
 
 def run(filename):
     clearAnim()
+    print 'running', filename
     """
     This function runs an mdl script
     """
@@ -171,14 +173,18 @@ def run(filename):
         print 'Pass 2 complete, beginning image rendering...'
         a = time.time()
         tc = {}
-        draw = lambda *t: drawObjectsNicely(*t, shader=phongShader, mat=mat, texcache=tc, lights=lights)
+        #draw = lambda *t, **k: drawObjectsNicely(*t, **k, shader=phongShader, mat=mat, texcache=tc, lights=lights)
+        path = [(500*math.sin(i/25.*math.pi), 500*math.cos(i/25.*math.pi), 500) for i in range(50)]
         i = 0
         for frame in frameList:
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands)
             img = Image(500, 500)
-            draw(objects, img)
+            drawObjectsNicely(objects, img, V=(cam.x, cam.y, cam.z), shader=phongShader, mat=mat, texcache=tc, lights=lights)
             imgs.append(img)
+            cam.x, cam.y, cam.z = path[i]
+            transform.lookat(cam, 250, 250, 0)
+            print cam.x, cam.y, cam.z, cam.dx, cam.dy, cam.dz
             i += 1
         print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         print 'Saving images...'

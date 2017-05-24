@@ -106,13 +106,14 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
         if zbuf[y][x] >= z:
             continue
         #print 'not buffed'
-
-        nz = p1.nz * d1 + p2.nz * d2 + p3.nz * d3
-        if nz <= 0:
-            continue
-        zbuf[y][x] = z
+        
         nx = p1.nx * d1 + p2.nx * d2 + p3.nx * d3
         ny = p1.ny * d1 + p2.ny * d2 + p3.ny * d3
+        nz = p1.nz * d1 + p2.nz * d2 + p3.nz * d3
+        if (vx - x) * nx + (vy - y) * ny + (vz - z) * nz <= 0:
+            continue
+        zbuf[y][x] = z
+        
         Ka = mat.amb.col
         Kd = mat.diff.col
         Ks = mat.spec.col

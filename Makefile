@@ -3,3 +3,6 @@ run:
 
 g:
 	python script.py ganim.mdl
+
+cam:
+	python script.py camtest.mdl
