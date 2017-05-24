@@ -195,6 +195,16 @@ def perspective(wx, wy, n, f=None):
         inv[3][2] = -1/tn
         inv[3][3] = 1/tn
     return mat
+
+def lookat(cam, x, y, z):
+    x -= cam.x
+    y -= cam.y
+    z -= cam.z
+    cam.dx = atan2(z, y)
+    cam.dy = atan2(x, z)
+    cam.dz = atan2(y, x)
+
+
 '''
 A =
 n/r 0   0   0

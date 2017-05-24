@@ -17,7 +17,7 @@ ka = kd = Texture(True, (0,0,0), 'jupiter.png')
 ks = Texture(False, (30, 30, 10))
 mat = Material(ka, kd, ks, 4)
 lights = render.niceLights + [Light(500, 0, 200, (30, 10, 10), (128, 30, 30), (255, 180, 180))]
-
+cam = Camera(250, 250, 500, 0, 0, 0)
 def err(s):
     print 'ERROR\n'+s
     exit(1)
@@ -28,7 +28,7 @@ def warn(s):
 
 def runFrame(frame, commands):
     step = 0.05
-    cstack = [TransMatrix()]
+    cstack = [transform.scale(250,250,250)*transform.T(1,1,1)*transform.perspective(math.atan(45), math.atan(45), 50) * transform.V(cam)]
     img = Image(500, 500)
     objects = []
     for command in commands:
