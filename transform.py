@@ -29,13 +29,21 @@ class TransMatrix(object):
     def __mul__(self, mat):
         if isinstance(mat, TransMatrix):
             return TransMatrix(matrix.multiply(self.lst, mat.lst), matrix.multiply(mat.inv, self.inv))
-        elif isinstance(mat[0], tuple):  # point list (x,y,z)
+        elif isinstance(mat[0], tuple):  # point list (x,y,z
+            checkP = self.lst[3] != [0,0,0,1]
             if isinstance(mat[0][0], Point):  # big p, in place
                 for tri in mat:
                     for pt in tri:
                         x = self.lst[0][3] + pt.x*self.lst[0][0] + pt.y*self.lst[0][1] + pt.z*self.lst[0][2]
                         y = self.lst[1][3] + pt.x*self.lst[1][0] + pt.y*self.lst[1][1] + pt.z*self.lst[1][2]
                         z = self.lst[2][3] + pt.x*self.lst[2][0] + pt.y*self.lst[2][1] + pt.z*self.lst[2][2]
+                        if checkP:
+                            w = self.lst[3][3] + pt.x*self.lst[3][0] + pt.y*self.lst[3][1] + pt.z*self.lst[3][2]
+                            if w != 1:
+                                rw = 1./w
+                                x *= rw
+                                y *= rw
+                                z *= rw
                         nx = self.inv[3][0] + pt.nx*self.inv[0][0] + pt.ny*self.inv[1][0] + pt.nz*self.inv[2][0]
                         ny = self.inv[3][1] + pt.nx*self.inv[0][1] + pt.ny*self.inv[1][1] + pt.nz*self.inv[2][1]
                         nz = self.inv[3][2] + pt.nx*self.inv[0][2] + pt.ny*self.inv[1][2] + pt.nz*self.inv[2][2]
@@ -125,7 +133,7 @@ def C(cam):
     return dt * m
 
 def C2(cam, near, far):
-    m = R('z', -cam.dz) * R('y', -cam.dy) * R('z', -cam.dz) * T(-cam.x, -cam.y, -cam.z)
+    m = R('z', -cam.dx) * R('y', -cam.dy) * R('z', -cam.dz) * T(-cam.x, -cam.y, -cam.z)
     dt = TransMatrix()
     dt[0][0] = cam.vz
     dt[1][1] = cam.vz
@@ -152,18 +160,41 @@ def C3(r,t,n,f):
     mat[2][3] = -2.*(f*n)/(f-n)
     mat[3][3] = 0
     mat[3][2] = -1
+    mat.inv[0][0] = 1.*r/n
+    mat.inv[1][1] = 1.*t/n
+    mat.inv[2][2] = 0
+    mat.inv[2][3] = 1.*(n-f)/(2*f*n)
+    mat.inv[3][2] = -1
+    mat.inv[3][3] = 1.*(f+n)/(2*f*n)
     return mat
 
-def C3invT(r, t, n, f):
+def V(cam):
+    return R('z', -cam.dx) * R('y', -cam.dy) * R('z', -cam.dz) * T(-cam.x, -cam.y, -cam.z)
+
+def perspective(wx, wy, n, f=None):
     mat = TransMatrix()
-    mat[0][0] = 1.*r/n
-    mat[1][1] = 1.*t/n
-    mat[2][2] = 0
-    mat[2][3] = 1.*(n-f)/(2*f*n)
+    inv = mat.inv
+    mat[0][0] = wx
+    mat[1][1] = wy
+    mat[3][3] = 0
     mat[3][2] = -1
-    mat[3][3] = 1.*(f+n)/(2*f*n)
+    inv[0][0] = 1./wx
+    inv[1][1] = 1./wy
+    inv[2][2] = 0
+    inv[2][3] = -1
+    if f is not None:
+        mat[2][2] = (f+n+0.)/(n-f)
+        tnf = 2.*n*f
+        mat[2][3] = tnf/(n-f)
+        inv[3][2] = (n-f)/tnf
+        inv[3][3] = (f+n)/tnf
+    else:
+        mat[2][2] = -1
+        tn = 2.*n
+        mat[2][3] = -tn
+        inv[3][2] = -1/tn
+        inv[3][3] = 1/tn
     return mat
-
 '''
 A =
 n/r 0   0   0
