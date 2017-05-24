@@ -27,7 +27,7 @@ def warn(s):
 
 
 def runFrame(frame, commands):
-    step = 0.02
+    step = 0.05
     cstack = [TransMatrix()]
     img = Image(500, 500)
     objects = []
