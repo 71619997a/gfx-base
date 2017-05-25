@@ -196,31 +196,34 @@ def perspective(wx, wy, n, f=None):
         inv[3][3] = 1/tn
     return mat
 
-def lookat(cx, cy, cz, ux, uy, uz, x, y, z):
-    x -= cx
-    y -= cy
-    z -= cz
+def lookat(cam, x, y, z):
+    cx, cy, cz, ux, uy, uz = cam.x, cam.y, cam.z, cam.ux, cam.uy, cam.uz
+    x = cx - x
+    y = cy - y
+    z = cz - z
     vx, vy, vz = normalizedTuple((x, y, z))
-    ux, uy, uz = normalizedTuple((ux, uy, uz))
     wx, wy, wz = normalizedTuple(cross(vx,vy,vz,ux,uy,uz))
     ux, uy, uz = cross(wx, wy, wz, vx, vy, vz)
     mat = TransMatrix()
     mat[0][0] = wx
-    mat[1][0] = wy
-    mat[2][0] = wz
-    mat[0][1] = ux
+    mat[0][1] = wy
+    mat[0][2] = wz
+    mat[1][0] = ux
     mat[1][1] = uy
-    mat[2][1] = uz
-    mat[0][2] = -vx
-    mat[1][2] = -vy
+    mat[1][2] = uz
+    mat[2][0] = -vx
+    mat[2][1] = -vy
     mat[2][2] = -vz
-    mat.inv = matrix.transpose(mat)
-    mat[3][0] = -dot(wx,wy,wz,cx,cy,cz)
-    mat[3][1] = -dot(ux,uy,uz,cx,cy,cz)
-    mat[3][2] = dot(vx,vy,vz,cx,cy,cz)
-    mat.inv[3][0] = -dot(*mat[3][:3]+mat[0][:3])
-    mat.inv[3][1] = -dot(*mat[3][:3]+mat[1][:3])
-    mat.inv[3][2] = -dot(*mat[3][:3]+mat[2][:3])
+    mat.inv = matrix.transpose(mat.lst)
+    mat[0][3] = -dot(wx,wy,wz,cx,cy,cz)
+    mat[1][3] = -dot(ux,uy,uz,cx,cy,cz)
+    mat[2][3] = dot(vx,vy,vz,cx,cy,cz)
+    mat.inv[0][3] = -dot(mat[0][3], mat[1][3], mat[2][3],mat[0][0], mat[1][0], mat[2][0])
+    mat.inv[1][3] = -dot(mat[0][3], mat[1][3], mat[2][3],mat[0][1], mat[1][1], mat[2][1])
+    mat.inv[2][3] = -dot(mat[0][3], mat[1][3], mat[2][3],mat[0][2], mat[1][2], mat[2][2])
+    #print mat
+    #print TransMatrix(mat.inv)
+    #print TransMatrix(matrix.multiply(mat.lst, mat.inv))
     return mat
 '''
 A =
@@ -243,8 +246,8 @@ def iparse(inp):
 
 
 if __name__ == '__main__':  # parser
-    cam = Camera(0,0,0,0,0,0)
-    t = lookat(0,0,0,0,0,1, 50, 50, 50)
+    cam = Camera(100,20,30,1,0,0)
+    t = lookat(cam, 50, 50, 50)
     # t = V(cam)
     l = [-50,50]
     for i in l:
@@ -252,4 +255,4 @@ if __name__ == '__main__':  # parser
             for k in l:
                 m = [(i,j,k)]
                 print i,j,k,'->',[int(h) for h in (t*m)[0]]
-    print TransMatrix(t.inv)*[(0,0,50*3**.5)]
+    print TransMatrix(t.inv)*[(0,0,(50**2+30**2+20**2)**.5)]

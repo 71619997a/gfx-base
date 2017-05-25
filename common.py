@@ -22,7 +22,7 @@ Point = _record('x y z nx ny nz tx ty')
 Texture = _record('type col texture')
 Material = _record('amb diff spec exp')
 Light = _record('x y z Ia Id Is')
-Camera = _record('x y z dx dy dz vx vy vz')
+Camera = _record('x y z ux uy uz')
 
 def normalize(*v):
     return normalizeList(list(v))
@@ -35,6 +35,9 @@ def normalizeList(v):
 
 def normalizedTuple(t): #ugh
     norm = math.sqrt(sum([i**2 for i in t]))
+    if norm == 0:
+        print 'bad norm'
+        return (1, 0, 0)
     return tuple(i/norm for i in t)
 
 def cross(v1x, v1y, v1z, v2x, v2y, v2z):
