@@ -174,7 +174,7 @@ def run(filename):
         a = time.time()
         tc = {}
         #draw = lambda *t, **k: drawObjectsNicely(*t, **k, shader=phongShader, mat=mat, texcache=tc, lights=lights)
-        path = [(500*math.sin(i/25.*math.pi), 500*math.cos(i/25.*math.pi), 500) for i in range(50)]
+        path = [(500*math.sin(i/10.*math.pi), 500*math.cos(i/10.*math.pi), 500) for i in range(20)]
         i = 0
         for frame in frameList:
             print 'Rendering frame %d...'%(i)
@@ -184,6 +184,7 @@ def run(filename):
             imgs.append(img)
             cam.x, cam.y, cam.z = path[i]
             transform.lookat(cam, 250, 250, 0)
+            print transform.V(cam) * [[250],[250],[0],[1]]
             print cam.x, cam.y, cam.z, cam.dx, cam.dy, cam.dz
             i += 1
         print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)

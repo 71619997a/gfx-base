@@ -39,3 +39,6 @@ def normalizedTuple(t): #ugh
 
 def cross(v1x, v1y, v1z, v2x, v2y, v2z):
     return [v1y*v2z - v1z*v2y, v1z*v2x - v1x*v2z, v1x*v2y - v1y*v2x]
+
+def dot(v1x, v1y, v1z, v2x, v2y, v2z):
+    return v1x*v2x+v1y*v2y+v1z*v2z

@@ -196,15 +196,32 @@ def perspective(wx, wy, n, f=None):
         inv[3][3] = 1/tn
     return mat
 
-def lookat(cam, x, y, z):
-    x -= cam.x
-    y -= cam.y
-    z -= cam.z
-    cam.dx = 180/math.pi * math.atan2(z, y) + 90
-    cam.dy = 180/math.pi * math.atan2(x, z) - 180
-    cam.dz = 180/math.pi * math.atan2(y, x) + 90
-
-
+def lookat(cx, cy, cz, ux, uy, uz, x, y, z):
+    x -= cx
+    y -= cy
+    z -= cz
+    vx, vy, vz = normalizedTuple((x, y, z))
+    ux, uy, uz = normalizedTuple((ux, uy, uz))
+    wx, wy, wz = normalizedTuple(cross(vx,vy,vz,ux,uy,uz))
+    ux, uy, uz = cross(wx, wy, wz, vx, vy, vz)
+    mat = TransMatrix()
+    mat[0][0] = wx
+    mat[1][0] = wy
+    mat[2][0] = wz
+    mat[0][1] = ux
+    mat[1][1] = uy
+    mat[2][1] = uz
+    mat[0][2] = -vx
+    mat[1][2] = -vy
+    mat[2][2] = -vz
+    mat.inv = matrix.transpose(mat)
+    mat[3][0] = -dot(wx,wy,wz,cx,cy,cz)
+    mat[3][1] = -dot(ux,uy,uz,cx,cy,cz)
+    mat[3][2] = dot(vx,vy,vz,cx,cy,cz)
+    mat.inv[3][0] = -dot(*mat[3][:3]+mat[0][:3])
+    mat.inv[3][1] = -dot(*mat[3][:3]+mat[1][:3])
+    mat.inv[3][2] = -dot(*mat[3][:3]+mat[2][:3])
+    return mat
 '''
 A =
 n/r 0   0   0
@@ -226,105 +243,13 @@ def iparse(inp):
 
 
 if __name__ == '__main__':  # parser
-    from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
-    from base import Image
-    from render import drawObjectsNicely
-    import render
-    import shape
-    cstack = [TransMatrix()]
-    frc = 0
-    cam = Camera(250, 250, 700, 90, 0, 0, -250, -250, 250)
-    img = Image(500, 500)
-    objects = []
-    while(True):
-        try:
-            inp = raw_input('').strip()
-        except EOFError:  # script file
-            break
-        if inp == 'line':
-            inp = raw_input('')
-            edges = edgemtx()
-            addEdge(edges, *iparse(inp))
-            edges = cstack[-1] * edges
-            objects.append((EDGE, edges))
-            #drawEdges(cstack[-1] * edges, img)
-        elif inp == 'ident':
-            cstack[-1] = TransMatrix()
-        elif inp == 'scale':
-            inp = raw_input('')
-            cstack[-1] *= S(*iparse(inp))
-        elif inp == 'move':
-            inp = raw_input('')
-            cstack[-1] *= T(*iparse(inp))
-        elif inp == 'rotate':
-            inp = raw_input('')
-            axis, t = (i.strip() for i in inp.split(' '))
-            cstack[-1] *= R(axis.lower(), float(t))
-        elif inp == 'display':
-            drawObjectsNicely(objects, img)
-            img.flipUD().display()
-        elif inp == 'save':
-            drawObjectsNicely(objects, img)
-            inp = raw_input('').strip()
-            if inp[-4:] == '.ppm':
-                img.flipUD().savePpm(inp)
-            else:
-                img.flipUD().saveAs(inp)
-        elif inp == 'saveframe':
-            drawObjectsNicely(objects, img)
-            inp = raw_input('').strip()
-            img.flipUD().savePpm('%s%d.ppm' % (inp, frc))
-            frc += 1
-        elif inp == 'circle':
-            inp = raw_input('').strip()
-            edges = edgemtx()
-            addCircle(*[edges]+iparse(inp)+[.01])
-            edges = cstack[-1] * edges
-            objects.append((EDGE, edges))
-            #drawEdges(cstack[-1] * edges, img)
-        elif inp == 'bezier':
-            inp = raw_input('').strip()
-            edges = edgemtx()
-            addBezier(*[edges]+iparse(inp)+[.01])
-            edges = cstack[-1] * edges
-            objects.append((EDGE, edges))
-            #drawEdges(cstack[-1] * edges, img)
-        elif inp == 'hermite':
-            inp = raw_input('').strip()
-            edges = edgemtx()
-            addHermite(*[edges]+iparse(inp)+[.01])
-            edges = cstack[-1] * edges
-            objects.append((EDGE, edges))
-            #drawEdges(cstack[-1] * edges, img)
-        elif inp == 'clear':
-            img = Image(500, 500)
-        elif inp == 'clearstack':
-            cstack = [TransMatrix()]
-        elif inp == 'box':
-            inp = raw_input('').strip()
-            polys = edgemtx()
-            coos = iparse(inp)
-            shape.addBox(*[polys] + coos)
-            polys = cstack[-1] * polys
-            objects.append((POLY, polys))
-            #drawTriangles(cstack[-1] * polys, img, wireframe=True)
-        elif inp == 'sphere':
-            inp = raw_input('').strip()
-            polys = edgemtx()
-            shape.addSphere(*[polys] + iparse(inp) + [.01])
-            polys = cstack[-1] * polys
-            objects.append((POLY, polys))
-            #drawTriangles(cstack[-1] * polys, img, wireframe=True)
-        elif inp == 'torus':
-            inp = raw_input('').strip()
-            polys = edgemtx()
-            shape.addTorus(*[polys] + iparse(inp) + [.05, .05])
-            polys = cstack[-1] * polys
-            objects.append((POLY, polys))
-            #drawTriangles(cstack[-1] * polys, img, wireframe=True)
-        elif inp == 'push':
-            cstack.append(cstack[-1].clone())
-        elif inp == 'pop':
-            cstack.pop()
-        elif len(inp) < 1 or inp[0] != '#':
-            print repr(inp), 'not valid'
+    cam = Camera(0,0,0,0,0,0)
+    t = lookat(0,0,0,0,0,1, 50, 50, 50)
+    # t = V(cam)
+    l = [-50,50]
+    for i in l:
+        for j in l:
+            for k in l:
+                m = [(i,j,k)]
+                print i,j,k,'->',[int(h) for h in (t*m)[0]]
+    print TransMatrix(t.inv)*[(0,0,50*3**.5)]
