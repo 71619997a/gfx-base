@@ -26,9 +26,9 @@ def warn(s):
     print 'Warning\n'+s
 
 
-def runFrame(frame, commands):
+def runFrame(frame, commands, camT):
     step = 0.05
-    cstack = [transform.T(250, 250, 0) * transform.lookat(cam, 250, 250, 0)] # transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(math.tan(math.pi/4), math.atan(math.pi/4), 50, 2000) *
+    cstack = [camT] # transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(math.tan(math.pi/4), math.atan(math.pi/4), 50, 2000) *
     print cstack[0]
     img = Image(500, 500)
     objects = []
@@ -174,15 +174,19 @@ def run(filename):
         a = time.time()
         tc = {}
         #draw = lambda *t, **k: drawObjectsNicely(*t, **k, shader=phongShader, mat=mat, texcache=tc, lights=lights)
-        path = [(500*math.sin(i/25.*math.pi), 500*math.cos(i/25.*math.pi), 500) for i in range(50)]
+        path = [(500*math.sin(i/10.*math.pi)+250, 500*math.cos(i/10.*math.pi)+250, 500) for i in range(20)]
+        print path
         i = 0
         for frame in frameList:
-            print 'Rendering frame %d...'%(i)
-            objects = runFrame(frame, commands)
-            img = Image(500, 500)
-            drawObjectsNicely(objects, img, V=(cam.x, cam.y, cam.z), shader=phongShader, mat=mat, texcache=tc, lights=lights)
-            imgs.append(img)
             cam.x, cam.y, cam.z = path[i]
+            camT = transform.T(250,250,0)*transform.lookat(cam, 250,250,0)
+            print 'Rendering frame %d...'%(i)
+            objects = runFrame(frame, commands, camT)
+            img = Image(500, 500)
+            cp = (camT*[(cam.x, cam.y, cam.z)])[0]
+            print cp
+            drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
+            imgs.append(img)
             i += 1
         print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         print 'Saving images...'
