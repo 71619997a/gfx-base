@@ -81,10 +81,9 @@ def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
 
 #@profile
 def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader):
-    smnz = 1000
-    smxz = 0
-    tmnz = 1000
-    tmxz = 0
+    sn = cross(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z, p1.x - p3.x, p1.y - p3.y, p1.z - p3.z)
+    if dot(*sn + [p1.x - vx , p1.y - vy, p1.z - vz]) >= 0:
+        return []
     tri = triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
     det = float((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y))
     pts = []
@@ -114,18 +113,7 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
         nx = p1.nx * d1 + p2.nx * d2 + p3.nx * d3
         ny = p1.ny * d1 + p2.ny * d2 + p3.ny * d3
         nz = p1.nz * d1 + p2.nz * d2 + p3.nz * d3
-        if (vx - x) * nx + (vy - y) * ny + (vz - z) * nz <= 0:
-            #print 'skip ', x, y, z, nx, ny, nz
-            if z < smnz:
-                smnz = z
-            if z > smxz:
-                smxz = z
-            continue
         zbuf[y][x] = z
-        if z < tmnz:
-            tmnz = z
-        if z > tmxz:
-            tmxz = z
         Ka = mat.amb.col
         Kd = mat.diff.col
         Ks = mat.spec.col
@@ -149,9 +137,6 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
                     Ks = spectex[spech-1-ycor][xcor : xcor + 3]
         col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
         pts.append((x, y, col))
-    if tmxz and smxz:
-        print 'taken:',tmnz,tmxz
-        print 'skipped:',smnz,smxz
     return pts
 
 

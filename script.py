@@ -14,8 +14,8 @@ from common import *
 EDGE = 2
 POLY = 3
 ka = kd = Texture(True, (0,0,0), 'jupiter.png')
-ks = Texture(False, (30, 30, 10))
-mat = Material(ka, kd, ks, 4)
+ks = Texture(False, (0, 0, 255))
+mat = Material(ka, kd, ks, 30)
 lights = render.niceLights + [Light(500, 0, 200, (30, 10, 10), (128, 30, 30), (255, 180, 180))]
 cam = Camera(250, 250, 500, 1, 0, 0)
 def err(s):
@@ -27,7 +27,7 @@ def warn(s):
 
 
 def runFrame(frame, commands, camT):
-    step = 0.05
+    step = 0.02
     cstack = [camT] # transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(math.tan(math.pi/4), math.atan(math.pi/4), 50, 2000) *
     print cstack[0]
     img = Image(500, 500)
