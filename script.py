@@ -9,7 +9,7 @@ import shape
 from sys import argv
 import time
 from common import *
-
+from multiprocessing import Pool
 
 EDGE = 2
 POLY = 3
@@ -174,10 +174,23 @@ def run(filename):
         a = time.time()
         tc = {}
         #draw = lambda *t, **k: drawObjectsNicely(*t, **k, shader=phongShader, mat=mat, texcache=tc, lights=lights)
-        path = [(500*math.sin(i/10.*math.pi)+250, 500*math.cos(i/10.*math.pi)+250, 500) for i in range(20)]
+        path = [(500*math.sin(i*2./frames*math.pi)+250, 500*math.cos(i*2./frames*math.pi)+250, 500) for i in range(frames)]
         print path
         i = 0
-        for frame in frameList:
+        p = Pool(4)
+        def handleFrame(i):
+            frame = frameList[i]
+            x, y, z = path[i]
+            img = Image(500, 500)
+            camera = Camera(x, y, z, 0, 1, 0)
+            camT = transform.T(250,250,0)*transform.lookat(camera, 250,250,0)
+            print 'Rendering frame %d...'%(i)
+            objects = runFrame(frame, commands, camT)
+            cp = (camT*[(cam.x, cam.y, cam.z)])[0]
+            drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
+            return img
+        imgs = p.map(handleFrame, range(frames))
+        '''for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
             camT = transform.T(250,250,0)*transform.lookat(cam, 250,250,0)
             print 'Rendering frame %d...'%(i)
@@ -187,7 +200,7 @@ def run(filename):
             print cp
             drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
             imgs.append(img)
-            i += 1
+            i += 1'''
         print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         print 'Saving images...'
         a = time.time()
