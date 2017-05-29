@@ -177,19 +177,17 @@ def run(filename):
         path = [(500*math.sin(i*2./frames*math.pi)+250, 500*math.cos(i*2./frames*math.pi)+250, 500) for i in range(frames)]
         print path
         i = 0
-        p = Pool(4)
-        def handleFrame(i):
-            frame = frameList[i]
-            x, y, z = path[i]
-            img = Image(500, 500)
-            camera = Camera(x, y, z, 1, 0, 0)
-            camT = transform.T(250,250,0)*transform.lookat(camera, 250,250,0)
+        for frame in frameList:
+            cam.x, cam.y, cam.z = path[i]
+            camT = transform.T(250,250,0)*transform.lookat(cam, 250,250,0)
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands, camT)
+            img = Image(500, 500)
             cp = (camT*[(cam.x, cam.y, cam.z)])[0]
+            print cp
             drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
-            return img
-        imgs = [handleFrame(i) for i in range(frames))
+            imgs.append(img)
+            i += 1
         '''for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
             camT = transform.T(250,250,0)*transform.lookat(cam, 250,250,0)
