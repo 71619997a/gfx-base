@@ -2,7 +2,7 @@ import mdl
 from transform import TransMatrix
 import transform
 from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
-from base import Image, makeAnimation, clearAnim
+from base import Image, makeAnimation, clearAnim, animate
 from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects, autoTrianglesFromVT, flatTrisFromVT, trianglesFromVTNT
 import render
 import shape
@@ -182,14 +182,14 @@ def run(filename):
             frame = frameList[i]
             x, y, z = path[i]
             img = Image(500, 500)
-            camera = Camera(x, y, z, 0, 1, 0)
+            camera = Camera(x, y, z, 1, 0, 0)
             camT = transform.T(250,250,0)*transform.lookat(camera, 250,250,0)
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands, camT)
             cp = (camT*[(cam.x, cam.y, cam.z)])[0]
             drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
             return img
-        imgs = p.map(handleFrame, range(frames))
+        imgs = [handleFrame(i) for i in range(frames))
         '''for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
             camT = transform.T(250,250,0)*transform.lookat(cam, 250,250,0)
@@ -212,7 +212,7 @@ def run(filename):
         makeAnimation(basename, 'ppm')
         print 'Animation created in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         # clearAnim()
-
+        animate(basename)
 
     else:
         cstack = [TransMatrix()]
