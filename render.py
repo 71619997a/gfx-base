@@ -82,7 +82,9 @@ def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
 #@profile
 def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader):
     sn = cross(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z, p1.x - p3.x, p1.y - p3.y, p1.z - p3.z)
-    if dot(*sn + [p1.x - vx , p1.y - vy, p1.z - vz]) >= 0:
+    snx, sny, snz = sn
+    snv = snx*vx+sny*vy+snz*vz
+    if snx*p1.x+sny*p1.y+snz*p1.z >= snv:
         return []
     tri = triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
     det = float((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y))
@@ -106,7 +108,7 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
             continue
         d1, d2, d3 = getBary(x, y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, det)
         z = p1.z * d1 + p2.z * d2 + p3.z * d3
-        if zbuf[y][x] >= z:
+        if zbuf[y][x] >= z: 
             continue
         #print 'not buffed'
         

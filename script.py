@@ -27,7 +27,7 @@ def warn(s):
 
 
 def runFrame(frame, commands, camT):
-    step = 0.02
+    step = 0.1
     cstack = [camT] # transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(math.tan(math.pi/4), math.atan(math.pi/4), 50, 2000) *
     print cstack[0]
     img = Image(500, 500)
@@ -174,7 +174,7 @@ def run(filename):
         a = time.time()
         tc = {}
         #draw = lambda *t, **k: drawObjectsNicely(*t, **k, shader=phongShader, mat=mat, texcache=tc, lights=lights)
-        path = [(500*math.sin(i/10.*math.pi)+250, 500*math.cos(i/10.*math.pi)+250, 500) for i in range(20)]
+        path = [(500*math.sin(i*2./frames*math.pi)+250, 500*math.cos(i*2./frames*math.pi)+250, 500) for i in range(frames)]
         print path
         i = 0
         for frame in frameList:
@@ -185,7 +185,7 @@ def run(filename):
             img = Image(500, 500)
             cp = (camT*[(cam.x, cam.y, cam.z)])[0]
             print cp
-            drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
+            drawObjectsNicely(objects, img, V=cp, shader=render.normMapShader, mat=mat, texcache=tc, lights=lights)
             imgs.append(img)
             i += 1
         print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)
