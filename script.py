@@ -2,14 +2,14 @@ import mdl
 from transform import TransMatrix
 import transform
 from edgeMtx import edgemtx, addEdge, addTriangle, drawEdges, addBezier, addHermite, addCircle, drawTriangles
-from base import Image, makeAnimation, clearAnim
+from base import Image, makeAnimation, clearAnim, animate
 from render import renderTriangle, phongShader, drawObjectsNicely, drawObjects, autoTrianglesFromVT, flatTrisFromVT, trianglesFromVTNT
 import render
 import shape
 from sys import argv
 import time
 from common import *
-
+from multiprocessing import Pool
 
 EDGE = 2
 POLY = 3
@@ -177,7 +177,20 @@ def run(filename):
         path = [(500*math.sin(i*2./frames*math.pi)+250, 500*math.cos(i*2./frames*math.pi)+250, 500) for i in range(frames)]
         print path
         i = 0
-        for frame in frameList:
+        p = Pool(4)
+        def handleFrame(i):
+            frame = frameList[i]
+            x, y, z = path[i]
+            img = Image(500, 500)
+            camera = Camera(x, y, z, 1, 0, 0)
+            camT = transform.T(250,250,0)*transform.lookat(camera, 250,250,0)
+            print 'Rendering frame %d...'%(i)
+            objects = runFrame(frame, commands, camT)
+            cp = (camT*[(cam.x, cam.y, cam.z)])[0]
+            drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
+            return img
+        imgs = [handleFrame(i) for i in range(frames))
+        '''for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
             camT = transform.T(250,250,0)*transform.lookat(cam, 250,250,0)
             print 'Rendering frame %d...'%(i)
@@ -187,7 +200,7 @@ def run(filename):
             print cp
             drawObjectsNicely(objects, img, V=cp, shader=render.normMapShader, mat=mat, texcache=tc, lights=lights)
             imgs.append(img)
-            i += 1
+            i += 1'''
         print 'Images rendered in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         print 'Saving images...'
         a = time.time()
@@ -199,7 +212,7 @@ def run(filename):
         makeAnimation(basename, 'ppm')
         print 'Animation created in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         # clearAnim()
-
+        animate(basename)
 
     else:
         cstack = [TransMatrix()]

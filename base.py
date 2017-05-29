@@ -89,3 +89,6 @@ def makeAnimation(name, format='png'):
 
 def clearAnim():
         os.system('rm anim/*')
+
+def animate(name):
+        os.system('animate %s.gif' % (name))
