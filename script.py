@@ -28,7 +28,7 @@ def warn(s):
 
 def runFrame(frame, commands, camT):
     step = 0.1
-    cstack = [camT] # transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(math.tan(math.pi/4), math.atan(math.pi/4), 50, 2000) *
+    cstack = [camT]
     print cstack[0]
     img = Image(500, 500)
     objects = []
@@ -73,10 +73,13 @@ def runFrame(frame, commands, camT):
         elif inp == 'clearstack':
             cstack = [TransMatrix()]
         elif inp == 'box':
-            vxs = cstack[-1] * shape.genBoxPoints(*command[1:7])
+            vxs = shape.genBoxPoints(*command[1:7])
+            print vxs
             tris = shape.genBoxTris()
+            a,b,c = tris[0]
+            print vxs[a],vxs[b],vxs[c]
             shape.fixOverlaps(vxs, tris)
-            objects.append((POLY, flatTrisFromVT(vxs, tris)))
+            objects.append((POLY, cstack[-1] * list(flatTrisFromVT(vxs, tris))))
             #polys = edgemtx()
             #shape.addBox(*(polys,) + command[1:7])
             #polys = cstack[-1] * polys
@@ -85,6 +88,8 @@ def runFrame(frame, commands, camT):
         elif inp == 'sphere':
             vxs = shape.genSpherePoints(*command[1:5]+(step,))
             tris = shape.genSphereTris(step)
+            a,b,c = tris[0]
+            print vxs[a],vxs[b],vxs[c]
             shape.fixOverlaps(vxs, tris)
             pts = list(trianglesFromVTNT(vxs, tris))
             cstack[-1]*pts
@@ -179,13 +184,13 @@ def run(filename):
         i = 0
         for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
-            camT = transform.T(250,250,0)*transform.lookat(cam, 250,250,0)
+            camT = transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(120,120, 100, 2000) * transform.lookat(cam, 250,250,0)
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands, camT)
             img = Image(500, 500)
             cp = (camT*[(cam.x, cam.y, cam.z)])[0]
             print cp
-            drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
+            drawObjectsNicely(objects, img, V=cp, shader=render.normMapShader, mat=mat, texcache=tc, lights=lights)
             imgs.append(img)
             i += 1
         '''for frame in frameList:

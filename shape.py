@@ -7,9 +7,9 @@ def genBoxPoints(x, y, z, w, h, d):
     if w < 0:
         return genBoxPoints(x + w, y, z, -w, h, d)
     if h < 0:
-        return genBoxPoints(x, y + h, z, w, -h, d)
+        return genBoxPoints(x, y - h, z, w, -h, d)
     if d < 0:
-        return genBoxPoints(x, y, z + d, w, h, -d)
+        return genBoxPoints(x, y, z - d, w, h, -d)
     pts = []
     for i in range(8):
         xcor = x + (i >> 2) * w
@@ -19,7 +19,7 @@ def genBoxPoints(x, y, z, w, h, d):
     return pts
 
 def genBoxTris():
-    return [(0,5,1),(0,4,5),(2,3,7),(2,7,6),(0,2,6),(0,6,4),(1,7,3),(1,5,7),(0,1,3),(0,3,2),(4,7,5),(4,6,7)]
+    return [(0, 1, 5), (0, 5, 4), (2, 7, 3), (2, 6, 7), (0, 6, 2), (0, 4, 6), (1, 3, 7), (1, 7, 5), (0, 3, 1), (0, 2, 3), (4, 5, 7), (4, 7, 6)]
 
 def addBox(m, x, y, z, w, h, d):
     pts = genBoxPoints(x, y, z, w, h, d)

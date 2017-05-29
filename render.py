@@ -177,7 +177,7 @@ def genVertexNorms(vxs, tris):
             continue
         addIP(an1, c1)
         addIP(an2, c2)
-        addIP(an3, c2)
+        addIP(an3, c3)
     for i in range(len(norms)):
         n = norms[i]
         if n != [0.,0.,0.]:
@@ -242,6 +242,7 @@ niceLights = [
     # Light(750, -3000, 750, (70, 65, 60), (200, 180, 160), (255, 230, 210)),  # sun at just past noon
     Light(0, 500, 200, (0, 20, 60), (30, 100, 200), (50, 150, 255))  # cyan light to the left-top
     ]
+
 
 def normMapShader(x, y, z, nx, ny, nz, *_):
     return [int(nx * 127.5 + 127.5), int(ny * 127.5 + 127.5), int(nz * 127.5 + 127.5)]

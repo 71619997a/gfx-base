@@ -171,9 +171,11 @@ def C3(r,t,n,f):
 def V(cam):
     return R('x', -cam.dx) * R('y', -cam.dy) * R('z', -cam.dz) * T(-cam.x, -cam.y, -cam.z)
 
-def perspective(wx, wy, n, f=None):
+def perspective(fovx, fovy, n, f=None):
     mat = TransMatrix()
     inv = mat.inv
+    wx = 1 / math.tan(fovx*math.pi/360.)
+    wy = 1 / math.tan(fovy*math.pi/360.)
     mat[0][0] = wx
     mat[1][1] = wy
     mat[3][3] = 0
