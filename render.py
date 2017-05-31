@@ -58,7 +58,7 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
     except ZeroDivisionError:
         return 1, 0, 0
 
-@profile
+#@profile
 def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks, a):
     vxx = vx - x
     vyy = vy - y
@@ -91,7 +91,7 @@ def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks, a):
         c[i] = int(255*(1 if c[i] > 1 else c[i]**(1/2.2)))
     return c
 
-@profile
+#@profile
 def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader):
     sn = cross(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z, p1.x - p3.x, p1.y - p3.y, p1.z - p3.z)
     snx, sny, snz = sn
