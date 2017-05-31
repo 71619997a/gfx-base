@@ -58,28 +58,40 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
     except ZeroDivisionError:
         return 1, 0, 0
 
-#@profile
+@profile
 def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks, a):
-    Vx, Vy, Vz = normalize(vx-x,vy-y,vz-z)
+    vxx = vx - x
+    vyy = vy - y
+    vzz = vz - z
+    vd = (vxx**2+vyy**2+vzz**2)**0.5
+    Vx, Vy, Vz = vxx/vd, vyy/vd, vzz/vd
     c = [0,0,0]
     for l in lights:
-        Lmx , Lmy, Lmz = normalize(l.x-x,l.y-y,l.z-z)
+        lxx = l.x - x
+        lyy = l.y - y
+        lzz = l.z - z
+        ld = lxx**2+lyy**2+lzz**2
+        Lmx , Lmy, Lmz = lxx/ld, lyy/ld, lzz/ld
         Lmn = Lmx * nx + Lmy * ny + Lmz * nz
         Rmx = 2 * Lmn * nx - Lmx
         Rmy = 2 * Lmn * ny - Lmy
         Rmz = 2 * Lmn * nz - Lmz
-        diff = max(Lmn, 0)
+        diff = 0 if Lmn < 0 else Lmn
         try:
-            spec = max((Rmx*Vx+Rmy*Vy+Rmz*Vz), 0)**a
+            RmV = Rmx*Vx+Rmy*Vy+Rmz*Vz
+            if RmV < 0:
+                spec = 0
+            else:
+                spec = RmV**a
         except:
             spec = 1
         for i in xrange(3):
             c[i] += Ka[i]*l.Ia[i] + Kd[i]*l.Id[i]*diff + Ks[i]*l.Is[i]*spec
     for i in xrange(3):
-        c[i] = min(int(c[i]), 65535) / 256
+        c[i] = int(255*(1 if c[i] > 1 else c[i]**(1/2.2)))
     return c
 
-#@profile
+@profile
 def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader):
     sn = cross(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z, p1.x - p3.x, p1.y - p3.y, p1.z - p3.z)
     snx, sny, snz = sn
@@ -125,21 +137,25 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
             # print tc[0], tc[1]
             if 1>=tcx>=0 and 1>=tcy>=0:
                 # TODO transparency checking
+                Sa = Sd = Ss = (1., 1., 1.)
                 if mat.amb.type:
                     xcor = int(tcx*ambw)*4
                     ycor = int(tcy*ambh)
-                    Sa = ambtex[ambh-1-ycor][xcor : xcor + 3]
-                    Ka = [Ka[i]*Sa[i]/255 for i in xrange(3)]
+                    Sa = [i/255. for i in ambtex[ambh-1-ycor][xcor : xcor + 3]]
+                    
                 if mat.diff.type:
                     xcor = int(tcx*diffw)*4
                     ycor = int(tcy*diffh)
-                    Sd = difftex[diffh-1-ycor][xcor : xcor + 3]
-                    Kd = [Kd[i]*Sd[i]/255 for i in xrange(3)]
+                    Sd = [i/255. for i in difftex[diffh-1-ycor][xcor : xcor + 3]]
+                    
                 if mat.spec.type:
                     xcor = int(tcx*specw)*4
                     ycor = int(tcy*spech)
-                    Ss = spectex[spech-1-ycor][xcor : xcor + 3]
-                    Ka = [Kd[i]*Sd[i]/255 for i in xrange(3)]
+                    Ss = [i/255. for i in spectex[spech-1-ycor][xcor : xcor + 3]]
+                    
+                Ka = [(Ka[i]*Sa[i])**2.2 for i in xrange(3)]
+                Kd = [(Kd[i]*Sd[i])**2.2 for i in xrange(3)]
+                Ks = [(Ks[i]*Ss[i])**2.2 for i in xrange(3)]
         col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
         pts.append((x, y, col))
     return pts
@@ -240,10 +256,10 @@ def flatTrisFromVT(vxs, tris):  # for surface norms
 def autoTrianglesFromVT(vxs, tris):  # for vertex norms
     return trianglesFromVTNT(vxs, tris, genVertexNorms(vxs, tris))
 
-dullWhite = Material(Texture(False, (255, 255, 255)), Texture(False, (255, 255, 255)), Texture(False, (150, 150, 150)), 10)
+dullWhite = Material(Texture(False, (1., 1., 1.)), Texture(False, (1., 1., 1.)), Texture(False, (0.6, 0.6, 0.6)), 10)
 niceLights = [
     # Light(750, -3000, 750, (70, 65, 60), (200, 180, 160), (255, 230, 210)),  # sun at just past noon
-    Light(0, 500, 200, (0, 20, 60), (30, 100, 200), (50, 150, 255))  # cyan light to the left-top
+    Light(0, 500, 200, (0., .07, .15), (.12, .4, .77), (.2, .6, 1.))  # cyan light to the left-top
     ]
 
 

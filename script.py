@@ -13,10 +13,10 @@ from multiprocessing import Pool
 
 EDGE = 2
 POLY = 3
-ka = kd = Texture(True, (200, 200, 50), 'jupiter.png')
-ks = Texture(False, (0, 0, 255))
-mat = Material(ka, kd, ks, 30)
-lights = render.niceLights + [Light(500, 0, 200, (30, 10, 10), (128, 30, 30), (255, 180, 180))]
+ka = kd = Texture(True, (.8, .8, .2), 'jupiter.png')
+ks = Texture(False, (.25, .25, .05))
+mat = Material(ka, kd, ks, 4)
+lights = render.niceLights + [Light(500, 0, 200, (.12, .03, .03), (.5, .12, .12), (1., .6, .6))]
 cam = Camera(250, 250, 500, 1, 0, 0)
 def err(s):
     print 'ERROR\n'+s
@@ -27,7 +27,7 @@ def warn(s):
 
 
 def runFrame(frame, commands, camT):
-    step = 0.1
+    step = 0.02
     cstack = [camT]
     print cstack[0]
     img = Image(500, 500)
