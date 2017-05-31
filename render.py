@@ -59,7 +59,7 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
         return 1, 0, 0
 
 #@profile
-def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks,a):
+def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks, a):
     Vx, Vy, Vz = normalize(vx-x,vy-y,vz-z)
     c = [0,0,0]
     for l in lights:
@@ -128,15 +128,18 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
                 if mat.amb.type:
                     xcor = int(tcx*ambw)*4
                     ycor = int(tcy*ambh)
-                    Ka = ambtex[ambh-1-ycor][xcor : xcor + 3]
+                    Sa = ambtex[ambh-1-ycor][xcor : xcor + 3]
+                    Ka = [Ka[i]*Sa[i]/255 for i in xrange(3)]
                 if mat.diff.type:
                     xcor = int(tcx*diffw)*4
                     ycor = int(tcy*diffh)
-                    Kd = difftex[diffh-1-ycor][xcor : xcor + 3]
+                    Sd = difftex[diffh-1-ycor][xcor : xcor + 3]
+                    Kd = [Kd[i]*Sd[i]/255 for i in xrange(3)]
                 if mat.spec.type:
                     xcor = int(tcx*specw)*4
                     ycor = int(tcy*spech)
-                    Ks = spectex[spech-1-ycor][xcor : xcor + 3]
+                    Ss = spectex[spech-1-ycor][xcor : xcor + 3]
+                    Ka = [Kd[i]*Sd[i]/255 for i in xrange(3)]
         col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
         pts.append((x, y, col))
     return pts

@@ -13,7 +13,7 @@ from multiprocessing import Pool
 
 EDGE = 2
 POLY = 3
-ka = kd = Texture(True, (0,0,0), 'jupiter.png')
+ka = kd = Texture(True, (200, 200, 50), 'jupiter.png')
 ks = Texture(False, (0, 0, 255))
 mat = Material(ka, kd, ks, 30)
 lights = render.niceLights + [Light(500, 0, 200, (30, 10, 10), (128, 30, 30), (255, 180, 180))]
@@ -190,7 +190,7 @@ def run(filename):
             img = Image(500, 500)
             cp = (camT*[(cam.x, cam.y, cam.z)])[0]
             print cp
-            drawObjectsNicely(objects, img, V=cp, shader=render.normMapShader, mat=mat, texcache=tc, lights=lights)
+            drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
             imgs.append(img)
             i += 1
         '''for frame in frameList:
