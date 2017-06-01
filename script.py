@@ -13,7 +13,7 @@ from multiprocessing import Pool
 
 EDGE = 2
 POLY = 3
-ka = kd = Texture(True, (.8, .8, .2), 'jupiter.png')
+ka = kd = Texture(True, (.8, .8, .2), 'checker.png')
 ks = Texture(False, (.25, .25, .05))
 mat = Material(ka, kd, ks, 4)
 lights = render.niceLights + [Light(500, 0, 200, (.12, .03, .03), (.5, .12, .12), (1., .6, .6))]

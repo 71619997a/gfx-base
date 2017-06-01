@@ -113,6 +113,15 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
         spectex = getTexture(mat.spec.texture, texcache)
         specw = len(spectex[0]) / 4
         spech = len(spectex)
+    z1r = 1./p1.z
+    z2r = 1./p2.z
+    z3r = 1./p3.z
+    txz1 = p1.tx*z1r # (tx1 / z1)
+    tyz1 = p1.ty*z1r
+    txz2 = p2.tx*z2r
+    tyz2 = p2.ty*z2r
+    txz3 = p3.tx*z3r
+    tyz3 = p3.ty*z3r
     for x, y in tri:
         #print x,y
         if not (0 <= x < 500 and 0 <= y < 500):
@@ -132,8 +141,14 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
         Kd = mat.diff.col
         Ks = mat.spec.col
         if mat.amb.type or mat.diff.type or mat.spec.type:
+            # affine texture mapping
             tcx = p1.tx*d1+p2.tx*d2+p3.tx*d3
             tcy = p1.ty*d1+p2.ty*d2+p3.ty*d3
+            # perspective correct texture mapping
+            zrecip = 1/z
+            tcxp = (txz1*d1+txz2*d2+txz3*d3) / zrecip # interpolated (tcx/z) / interpolated zrecip
+            tcyp = (tyz1*d1+tyz2*d2+tyz3*d3) / zrecip
+            #print tcxa, tcya, tcx, tcy
             # print tc[0], tc[1]
             if 1>=tcx>=0 and 1>=tcy>=0:
                 # TODO transparency checking
@@ -141,21 +156,21 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
                 if mat.amb.type:
                     xcor = int(tcx*ambw)*4
                     ycor = int(tcy*ambh)
-                    Sa = [i/255. for i in ambtex[ambh-1-ycor][xcor : xcor + 3]]
+                    Sa = [(i/255.)**2.2 for i in ambtex[ambh-1-ycor][xcor : xcor + 3]]
                     
                 if mat.diff.type:
                     xcor = int(tcx*diffw)*4
                     ycor = int(tcy*diffh)
-                    Sd = [i/255. for i in difftex[diffh-1-ycor][xcor : xcor + 3]]
+                    Sd = [(i/255.)**2.2 for i in difftex[diffh-1-ycor][xcor : xcor + 3]]
                     
                 if mat.spec.type:
                     xcor = int(tcx*specw)*4
                     ycor = int(tcy*spech)
-                    Ss = [i/255. for i in spectex[spech-1-ycor][xcor : xcor + 3]]
+                    Ss = [(i/255.)**2.2 for i in spectex[spech-1-ycor][xcor : xcor + 3]]
                     
-                Ka = [(Ka[i]*Sa[i])**2.2 for i in xrange(3)]
-                Kd = [(Kd[i]*Sd[i])**2.2 for i in xrange(3)]
-                Ks = [(Ks[i]*Ss[i])**2.2 for i in xrange(3)]
+                Ka = [Ka[i]*Sa[i] for i in xrange(3)]
+                Kd = [Kd[i]*Sd[i] for i in xrange(3)]
+                Ks = [Ks[i]*Ss[i] for i in xrange(3)]
         col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
         pts.append((x, y, col))
     return pts
