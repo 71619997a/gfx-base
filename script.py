@@ -185,6 +185,7 @@ def run(filename):
         for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
             camT = transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(120,120, 100, 2000) * transform.lookat(cam, 250,250,0)
+            camT = transform.T(250, 250, 0) * transform.lookat(cam, 250,250,0)
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands, camT)
             img = Image(500, 500)
