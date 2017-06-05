@@ -1,7 +1,17 @@
 from edgeMtx import edgemtx, addToEdgeMtx, addTriangle, addPoint, addEdge, addCircle, drawEdges
 import math
 import transform
-
+# 4-7 are x+w
+# 2-3, 6-7 are y-h
+# 1,3,5,7 are z-d+d
+#0 0 0 0
+#1 0 0 +
+#2 0 + 0
+#3 0 + +
+#4 + 0 0
+#5 + 0 +
+#6 + + 0
+#7 + + +
 def genBoxPoints(x, y, z, w, h, d):
     # how to preserve orientation for dummies
     if w < 0:
@@ -20,6 +30,20 @@ def genBoxPoints(x, y, z, w, h, d):
 
 def genBoxTris():
     return [(0, 1, 5), (0, 5, 4), (2, 7, 3), (2, 6, 7), (0, 6, 2), (0, 4, 6), (1, 3, 7), (1, 7, 5), (0, 3, 1), (0, 2, 3), (4, 5, 7), (4, 7, 6)]
+
+#0 0 0 0
+#1 0 0 +
+#2 0 + 0
+#3 0 + +
+#4 + 0 0
+#5 + 0 +
+#6 + + 0
+#7 + + +
+#     B
+# T L D R
+#     F
+def genBoxTCs():
+    return [(0,.67
 
 def addBox(m, x, y, z, w, h, d):
     pts = genBoxPoints(x, y, z, w, h, d)

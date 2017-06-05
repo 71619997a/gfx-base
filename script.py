@@ -27,7 +27,7 @@ def warn(s):
 
 
 def runFrame(frame, commands, camT):
-    step = 0.02
+    step = 0.0199
     cstack = [camT]
     print cstack[0]
     img = Image(500, 500)
