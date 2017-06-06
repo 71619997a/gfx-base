@@ -6,6 +6,7 @@ class Vec2(object):
     def __iadd__(self, o):
         self.x+=o.x
         self.y+=o.y
+        return self
 
     def __add__(self, o):
         return Vec2(self.x+o.x,self.y+o.y)
@@ -13,6 +14,7 @@ class Vec2(object):
     def __isub__(self, o):
         self.x-=o.x
         self.y-=o.y
+        return self
 
     def __sub__(self, o):
         return Vec2(self.x-o.x,self.y-o.y)
@@ -20,14 +22,16 @@ class Vec2(object):
     def __imul__(self, o):
         self.x*=o
         self.y*=o
-
+        return self
+    
     def __mul__(self, o):
         return Vec2(self.x*o,self.y*o)
 
     def __idiv__(self, o):
         self.x/=o
         self.y/=o
-
+        return self
+    
     def __div__(self, o):
         return Vec2(self.x/o,self.y/o)
 
@@ -44,7 +48,8 @@ class Vec3(object):
         self.x+=o.x
         self.y+=o.y
         self.z+=o.z
-
+        return self
+    
     def __add__(self, o):
         return Vec3(self.x+o.x,self.y+o.y,self.z+o.z)
 
@@ -52,7 +57,8 @@ class Vec3(object):
         self.x-=o.x
         self.y-=o.y
         self.z-=o.z
-
+        return self
+    
     def __sub__(self, o):
         return Vec3(self.x-o.x,self.y-o.y,self.z-o.z)
 
@@ -60,7 +66,8 @@ class Vec3(object):
         self.x*=o
         self.y*=o
         self.z*=o
-
+        return self
+    
     def __mul__(self, o):
         return Vec3(self.x*o,self.y*o,self.z*o)
 
@@ -68,7 +75,8 @@ class Vec3(object):
         self.x/=o
         self.y/=o
         self.z/=o
-
+        return self
+    
     def __div__(self, o):
         return Vec3(self.x/o,self.y/o,self.z/o)
 
@@ -99,7 +107,8 @@ class Vec4(object):
         self.y+=o.y
         self.z+=o.z
         self.w+=o.w
-
+        return self
+    
     def __add__(self, o):
         return Vec4(self.x+o.x,self.y+o.y,self.z+o.z,self.w+o.w)
 
@@ -108,7 +117,8 @@ class Vec4(object):
         self.y-=o.y
         self.z-=o.z
         self.w-=o.w
-
+        return self
+    
     def __sub__(self, o):
         return Vec4(self.x-o.x,self.y-o.y,self.z-o.z,self.w-o.w)
 
@@ -117,7 +127,8 @@ class Vec4(object):
         self.y*=o
         self.z*=o
         self.w*=o
-
+        return self
+    
     def __mul__(self, o):
         return Vec4(self.x*o,self.y*o,self.z*o,self.w*o)
 
@@ -126,7 +137,8 @@ class Vec4(object):
         self.y/=o
         self.z/=o
         self.w/=o
-
+        return self
+    
     def __div__(self, o):
         return Vec4(self.x/o,self.y/o,self.z/o,self.w/o)
 
