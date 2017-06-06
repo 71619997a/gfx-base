@@ -53,32 +53,24 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
         d2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / det
         if d1 < 0 or d2 < 0 or d1 + d2 > 1:
             # print '({}, {}) not in ({}, {}), ({}, {}), ({}, {})'.format(x,y,x1,y1,x2,y2,x3,y3)
-            return 1, 0, 0
-        return d1, d2, 1-d1-d2
+            return Vec3(1, 0, 0)
+        return Vec3(d1, d2, 1-d1-d2)
     except ZeroDivisionError:
-        return 1, 0, 0
+        return Vec3(1, 0, 0)
 
-#@profile
-def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks, a):
-    vxx = vx - x
-    vyy = vy - y
-    vzz = vz - z
-    vd = (vxx**2+vyy**2+vzz**2)**0.5
-    Vx, Vy, Vz = vxx/vd, vyy/vd, vzz/vd
-    c = [0,0,0]
+#@_profile
+def phongShader(P,N,lights,V,Ka, Kd, Ks, a):
+    VP = V - P
+    VP.normalize()
+    c = Vec3(0,0,0)
     for l in lights:
-        lxx = l.x - x
-        lyy = l.y - y
-        lzz = l.z - z
-        ld = lxx**2+lyy**2+lzz**2
-        Lmx , Lmy, Lmz = lxx/ld, lyy/ld, lzz/ld
-        Lmn = Lmx * nx + Lmy * ny + Lmz * nz
-        Rmx = 2 * Lmn * nx - Lmx
-        Rmy = 2 * Lmn * ny - Lmy
-        Rmz = 2 * Lmn * nz - Lmz
+        LP = l.P - P
+        LP.normalize()
+        Lmn = LP.dot(N)
+        Rm = N * (2 * Lmn) - LP
         diff = 0 if Lmn < 0 else Lmn
         try:
-            RmV = Rmx*Vx+Rmy*Vy+Rmz*Vz
+            RmV = Rm.dot(VP)
             if RmV < 0:
                 spec = 0
             else:
@@ -92,14 +84,13 @@ def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks, a):
     return c
 
 #@profile
-def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader):
-    sn = cross(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z, p1.x - p3.x, p1.y - p3.y, p1.z - p3.z)
-    snx, sny, snz = sn
-    snv = snx*vx+sny*vy+snz*vz
-    if snx*p1.x+sny*p1.y+snz*p1.z >= snv:
+def renderTriangle(p1, p2, p3, mat, V, lights, texcache, zbuf, shader=phongShader):
+    sn = (p1.P - p2.P).cross(p1.P - p3.P)
+    snv = sn.dot(V)
+    if sn.dot(p1.P) >= snv:
         return []
-    tri = triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
-    det = float((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y))
+    tri = triangle(p1.P.x, p1.P.y, p2.P.x, p2.P.y, p3.P.x, p3.P.y)
+    det = float((p2 - p3).lvec().cross((p1 - p3).lvec()))  #float((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y))
     pts = []
     if mat.amb.type:
         ambtex = getTexture(mat.amb.texture, texcache)
@@ -116,38 +107,35 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
     z1r = 1./p1.z
     z2r = 1./p2.z
     z3r = 1./p3.z
-    txz1 = p1.tx*z1r # (tx1 / z1)
-    tyz1 = p1.ty*z1r
-    txz2 = p2.tx*z2r
-    tyz2 = p2.ty*z2r
-    txz3 = p3.tx*z3r
-    tyz3 = p3.ty*z3r
+    tz1 = p1.T*z1r # (tx1 / z1)
+    tz2 = p2.T*z2r
+    tz3 = p3.T*z3r
     for x, y in tri:
         #print x,y
         if not (0 <= x < 500 and 0 <= y < 500):
             #print 'offscreen'
             continue
-        d1, d2, d3 = getBary(x, y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, det)
-        z = p1.z * d1 + p2.z * d2 + p3.z * d3
+        D = getBary(x, y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, det)
+        z = p1.P.z * D.x + p2.P.z * D.y + p3.P.z * D.z
         if zbuf[y][x] >= z: 
             continue
         #print 'not buffed'
         
-        nx = p1.nx * d1 + p2.nx * d2 + p3.nx * d3
-        ny = p1.ny * d1 + p2.ny * d2 + p3.ny * d3
-        nz = p1.nz * d1 + p2.nz * d2 + p3.nz * d3
+        nx = p1.N.x * D.x + p2.N.x * D.y + p3.N.x * D.z
+        ny = p1.N.y * D.x + p2.N.y * D.y + p3.N.y * D.z
+        nz = p1.N.z * D.x + p2.N.z * D.y + p3.N.z * D.z
         zbuf[y][x] = z
         Ka = mat.amb.col
         Kd = mat.diff.col
         Ks = mat.spec.col
         if mat.amb.type or mat.diff.type or mat.spec.type:
             # affine texture mapping
-            tcx = p1.tx*d1+p2.tx*d2+p3.tx*d3
-            tcy = p1.ty*d1+p2.ty*d2+p3.ty*d3
+            tcx = p1.T.x*D.x+p2.T.x*D.y+p3.T.x*D.z
+            tcy = p1.T.y*D.x+p2.T.y*D.y+p3.T.y*D.z
             # perspective correct texture mapping
-            zrecip = 1/z
-            tcxp = (txz1*d1+txz2*d2+txz3*d3) / zrecip # interpolated (tcx/z) / interpolated zrecip
-            tcyp = (tyz1*d1+tyz2*d2+tyz3*d3) / zrecip
+            #zrecip = 1/z
+            #tcxp = (txz1*d1+txz2*d2+txz3*d3) / zrecip # interpolated (tcx/z) / interpolated zrecip
+            #tcyp = (tyz1*d1+tyz2*d2+tyz3*d3) / zrecip
             #print tcxa, tcya, tcx, tcy
             # print tc[0], tc[1]
             if 1>=tcx>=0 and 1>=tcy>=0:
@@ -171,7 +159,7 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
                 Ka = [Ka[i]*Sa[i] for i in xrange(3)]
                 Kd = [Kd[i]*Sd[i] for i in xrange(3)]
                 Ks = [Ks[i]*Ss[i] for i in xrange(3)]
-        col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
+        col = shader(Vec3(x, y, z), Vec3(nx, ny, nz), lights, V, Ka, Kd, Ks, mat.exp)
         pts.append((x, y, col))
     return pts
 
@@ -196,28 +184,21 @@ def addIP(a, v):
         a[i] += v[i]
 
 def genVertexNorms(vxs, tris):
-    norms = [[0,0,0] for _ in vxs]
+    norms = [Vec3(0,0,0) for _ in vxs]
     for p1, p2, p3 in tris:
         an1, an2, an3 = norms[p1], norms[p2], norms[p3]
         v1, v2, v3 = vxs[p1], vxs[p2], vxs[p3]
-        v12x, v12y, v12z = tuple(v2[n]-v1[n] for n in range(3))
-        v23x, v23y, v23z = tuple(v3[n]-v2[n] for n in range(3))
-        v31x, v31y, v31z = tuple(v1[n]-v3[n] for n in range(3))
+        v12 = v2 - v1
+        v32 = v2 - v3
+        c = v12.cross(v32)
+        an1 += c
+        an2 += c
+        an3 += c
+    for n in norms:
         try:
-            c1 = cross(v31x, v31y, v31z, -v12x, -v12y, -v12z)
-            c2 = cross(v12x, v12y, v12z, -v23x, -v23y, -v23z)
-            c3 = cross(v23x, v23y, v23z, -v31x, -v31y, -v31z)
+            n.normalize()
         except ZeroDivisionError:
-            continue
-        addIP(an1, c1)
-        addIP(an2, c2)
-        addIP(an3, c3)
-    for i in range(len(norms)):
-        n = norms[i]
-        if n != [0.,0.,0.]:
-            norms[i] = normalizedTuple(n)
-        else:
-            norms[i] = (1.,0.,0.)
+            n.set(1., 0., 0.)
     return norms
 
 def genTCs(norms):
@@ -235,7 +216,7 @@ def getPointsFromTriangles(m):  # assumes m is a poly mtx
             n3 = normalizeList(cross(-v23x, -v23y, -v23z, v31x, v31y, v31z))
         except ZeroDivisionError:
             continue
-        yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0),
+        yield (Point(Vec3(m[0][i], m[1][i], m[2][i]), n1[0], n1[1], n1[2], 0, 0),
                Point(m[0][i+1], m[1][i+1], m[2][i+1], n2[0], n2[1], n2[2], 0, 0),
                Point(m[0][i+2], m[1][i+2], m[2][i+2], n3[0], n3[1], n3[2], 0, 0))
 
