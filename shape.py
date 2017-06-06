@@ -43,7 +43,7 @@ def genBoxTris():
 # T L D R
 #     F
 def genBoxTCs():
-    return [(0,.67
+    return [(0,.67)]
 
 def addBox(m, x, y, z, w, h, d):
     pts = genBoxPoints(x, y, z, w, h, d)

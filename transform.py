@@ -11,16 +11,14 @@ POLY = 3
 class TransMatrix(object):
     def __init__(self, lst=-1, invt=-1):
         self.lst = matrix.id(4)
-        for i in xrange(4):
-            self.lst[i] = Vec4(*self.lst[i])
         self.invT = matrix.id(4)
-        for i in xrange(4):
-            self.invT[i] = Vec4(*self.invT[i])
         if lst != -1:
             self.lst = lst
         if invt != -1:
             self.invT = invt
-
+        for i in xrange(4):
+            self.lst[i] = Vec4(*self.lst[i])
+            self.invT[i] = Vec4(*self.invT[i])
     def __getitem__(self, i):
         return self.lst[i]
 
@@ -133,7 +131,7 @@ def R(axis, t, inv=True):
         mat[2][0] = -s
         mat[2][2] = c
     if inv:
-        mat.invT = R(axis, -t, False).lst.transpose()
+        mat.invT = R(axis, -t, False).transpose().lst
     return mat
 
 def V(cam):

@@ -16,8 +16,8 @@ POLY = 3
 ka = kd = Texture(True, (.8, .8, .2), 'checker.png')
 ks = Texture(False, (.25, .25, .05))
 mat = Material(ka, kd, ks, 4)
-lights = render.niceLights + [Light(500, 0, 200, (.12, .03, .03), (.5, .12, .12), (1., .6, .6))]
-cam = Camera(250, 250, 500, 1, 0, 0)
+lights = render.niceLights + [Light(Vec3(500, 0, 200), (.12, .03, .03), (.5, .12, .12), (1., .6, .6))]
+cam = Camera(Vec3(250, 250, 500), Vec3(1, 0, 0))
 def err(s):
     print 'ERROR\n'+s
     exit(1)
@@ -29,7 +29,7 @@ def warn(s):
 def runFrame(frame, commands, camT):
     step = 0.0199
     cstack = [camT]
-    print cstack[0]
+    print cstack[0][0]
     img = Image(500, 500)
     objects = []
     for command in commands:
@@ -184,8 +184,8 @@ def run(filename):
         i = 0
         for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
-            camT = transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(120,120, 100, 2000) * transform.lookat(cam, 250,250,0)
-            camT = transform.T(250, 250, 0) * transform.lookat(cam, 250,250,0)
+            camT = transform.S(250.,250.,250.)*transform.T(1,1,1)*transform.perspective(120.,120., 100., 2000.) * transform.lookat(cam, Vec3(250.,250.,0.))
+            camT = transform.T(250., 250., 0.) * transform.lookat(cam, Vec3(250.,250.,0.))
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands, camT)
             img = Image(500, 500)

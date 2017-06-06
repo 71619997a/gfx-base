@@ -221,7 +221,7 @@ def genVertexNorms(vxs, tris):
     return norms
 
 def genTCs(norms):
-    return [(math.asin(n[0])/math.pi+0.5, math.asin(n[1])/math.pi+0.5) for n in norms]
+    return [Vec2(math.asin(n[0])/math.pi+0.5, math.asin(n[1])/math.pi+0.5) for n in norms]
 
 
 def getPointsFromTriangles(m):  # assumes m is a poly mtx
@@ -245,10 +245,11 @@ def trianglesFromVTNT(vxs, tris, norms=None, tcs=None):
     if tcs is None:
         tcs = genTCs(norms)
     for a,b,c in tris:
+        print vxs[a], norms[a], tcs[a]
         yield (
-            Point(*vxs[a]+norms[a]+tcs[a]),
-            Point(*vxs[b]+norms[b]+tcs[b]),
-            Point(*vxs[c]+norms[c]+tcs[c]))
+            Point(vxs[a], norms[a], tcs[a]),
+            Point(vxs[b], norms[b], tcs[b]),
+            Point(vxs[c], norms[c], tcs[c]))
 
 def flatTrisFromVT(vxs, tris):  # for surface norms
     for a,b,c in tris:
