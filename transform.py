@@ -9,17 +9,17 @@ EDGE = 2
 POLY = 3
 
 class TransMatrix(object):
-    def __init__(self, lst=-1, inv=-1):
+    def __init__(self, lst=-1, invt=-1):
         self.lst = matrix.id(4)
         for i in xrange(4):
             self.lst[i] = Vec4(*self.lst[i])
         self.invT = matrix.id(4)
         for i in xrange(4):
-            self.inv[i] = Vec4(*self.lst[i])
+            self.invT[i] = Vec4(*self.invT[i])
         if lst != -1:
             self.lst = lst
-        if inv != -1:
-            self.inv = inv
+        if invt != -1:
+            self.invT = invt
 
     def __getitem__(self, i):
         return self.lst[i]
@@ -34,12 +34,14 @@ class TransMatrix(object):
         if isinstance(mat, TransMatrix):
             return TransMatrix(matrix.multiply(self.lst, mat.lst), matrix.multiply(mat.invT, self.invT))
         elif isinstance(mat[0], tuple):  # point list (x,y,z
-            checkP = !self.lst[3].same(0, 0, 0, 1)
+            checkP = not self.lst[3].same(0, 0, 0, 1)
             if isinstance(mat[0][0], Point):  # big p, in place
                 for tri in mat:
                     for pt in tri:
+                        pt.P = pt.P.post(1.)
+                        pt.N = pt.N.post(1.)
                         x = self.lst[0].dot(pt.P)
-                        y = self.lst[1].dot(pt.P)self.lst[1][3] + pt.x*self.lst[1][0] + pt.y*self.lst[1][1] + pt.z*self.lst[1][2]
+                        y = self.lst[1].dot(pt.P)
                         z = self.lst[2].dot(pt.P)
                         if checkP:
                             w = self.lst[3].dot(pt.P)
@@ -48,30 +50,31 @@ class TransMatrix(object):
                                 x *= rw
                                 y *= rw
                                 z *= rw
-                        nx = self.inv[3][0] + pt.nx*self.inv[0][0] + pt.ny*self.inv[1][0] + pt.nz*self.inv[2][0]
-                        ny = self.inv[3][1] + pt.nx*self.inv[0][1] + pt.ny*self.inv[1][1] + pt.nz*self.inv[2][1]
-                        nz = self.inv[3][2] + pt.nx*self.inv[0][2] + pt.ny*self.inv[1][2] + pt.nz*self.inv[2][2]
-                        pt.x, pt.y, pt.z = x, y, z
-                        pt.nx, pt.ny, pt.nz = normalizedTuple((nx, ny, nz))
+                        nx = self.invT[0].dot(pt.N)
+                        ny = self.invT[1].dot(pt.N)
+                        nz = self.invT[2].dot(pt.N)
+                        pt.P = Vec3(x, y, z)
+                        pt.N = Vec3(nx, ny, nz)
+                        pt.N.normalize()
                 return mat
             else:
-                newls = []
-                for pt in mat:
-                    nx = self.lst[0][3]
-                    ny = self.lst[1][3]
-                    nz = self.lst[2][3]
-                    for i in range(3):
-                        nx += self.lst[0][i] * pt[i]
-                        ny += self.lst[1][i] * pt[i]
-                        nz += self.lst[2][i] * pt[i]
-                    newls.append((nx,ny,nz))
-                return newls
+                return []
+        elif isinstance(mat[0], Vec3):
+            newls = []
+            for pt in mat:
+                pt = pt.post(1.)
+                nx = pt.dot(self.lst[0])
+                ny = pt.dot(self.lst[1])
+                nz = pt.dot(self.lst[2])
+                newls.append(Vec3(nx, ny, nz))
+            return newls
         else:  # matrix
             return matrix.multiply(self.lst, mat)
 
     def clone(self):
-        newlst = [row[:] for row in self.lst]
-        return TransMatrix(newlst)
+        newlst = [i.clone() for i in self.lst]
+        newit  = [i.clone() for i in self.invT]
+        return TransMatrix(newlst, newit)
 
     def transpose(self):
         newme = TransMatrix()
@@ -164,14 +167,14 @@ def perspective(fovx, fovy, n, f=None):
     return mat
 
 def lookat(cam, objP):
-    P = cam.P - objP
+    objP = cam.P - objP
     V = objP.normalized()
     W = V.cross(cam.U).normalized()
     U = W.cross(V)
     mat = TransMatrix()
-    mat[0] = W
-    mat[1] = U
-    mat[2] = -V
+    mat[0] = W.post(0.)
+    mat[1] = U.post(0.)
+    mat[2] = -V.post(0.)
     mat.invT = mat.clone().lst
     mat[0][3] = W.dot(cam.P)
     mat[1][3] = -U.dot(cam.P)
@@ -204,13 +207,13 @@ def iparse(inp):
 
 
 if __name__ == '__main__':  # parser
-    cam = Camera(100,20,30,1,0,0)
-    t = lookat(cam, 50, 50, 50)
+    cam = Camera(Vec3(100,20,30),Vec3(1,0,0))
+    t = lookat(cam, Vec3(50, 50, 50))
     # t = V(cam)
     l = [-50,50]
     for i in l:
         for j in l:
             for k in l:
-                m = [(i,j,k)]
+                m = [Vec3(i,j,k)]
                 print i,j,k,'->',[int(h) for h in (t*m)[0]]
-    print TransMatrix(t.inv)*[(0,0,(50**2+30**2+20**2)**.5)]
+    print TransMatrix(t.invT)*[Vec3(0,0,(50**2+30**2+20**2)**.5)]

@@ -23,7 +23,7 @@ Point = _record('P N T')
 Texture = _record('type col texture')
 Material = _record('amb diff spec exp')
 Light = _record('P Ia Id Is')
-Camera = _record('X U')
+Camera = _record('P U')
 
 def normalize(*v):
     return normalizeList(list(v))

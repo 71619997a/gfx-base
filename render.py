@@ -274,7 +274,7 @@ def autoTrianglesFromVT(vxs, tris):  # for vertex norms
 dullWhite = Material(Texture(False, (1., 1., 1.)), Texture(False, (1., 1., 1.)), Texture(False, (0.6, 0.6, 0.6)), 10)
 niceLights = [
     # Light(750, -3000, 750, (70, 65, 60), (200, 180, 160), (255, 230, 210)),  # sun at just past noon
-    Light(0, 500, 200, (0., .07, .15), (.12, .4, .77), (.2, .6, 1.))  # cyan light to the left-top
+    Light(Vec3(0, 500, 200), (0., .07, .15), (.12, .4, .77), (.2, .6, 1.))  # cyan light to the left-top
     ]
 
 
