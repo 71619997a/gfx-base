@@ -35,6 +35,14 @@ class Vec2(object):
     def __div__(self, o):
         return Vec2(self.x/o,self.y/o)
 
+    def __getitem__(self, i):
+        if i == 0:
+            return self.x
+        elif i == 1:
+            return self.y
+        else:
+            raise IndexError('Attempted to get index %s of a Vec2.' % (str(i)))
+
     def cross(self, o):
         return self.x*o.y - self.y*o.x
 
@@ -80,6 +88,16 @@ class Vec3(object):
     def __div__(self, o):
         return Vec3(self.x/o,self.y/o,self.z/o)
 
+    def __getitem__(self, i):
+        if i == 0:
+            return self.x
+        elif i == 1:
+            return self.y
+        elif i == 2:
+            return self.z
+        else:
+            raise IndexError('Attempted to get index %s of a Vec3.' % (str(i)))
+    
     def cons(o1, o2):
         if isinstance(o1, Vec2):
             return Vec3(o1.x, o1.y, o2)
@@ -142,6 +160,18 @@ class Vec4(object):
     def __div__(self, o):
         return Vec4(self.x/o,self.y/o,self.z/o,self.w/o)
 
+    def __getitem__(self, i):
+        if i == 0:
+            return self.x
+        elif i == 1:
+            return self.y
+        elif i == 2:
+            return self.z
+        elif i == 3:
+            return self.w
+        else:
+            raise IndexError('Attempted to get index %s of a Vec4.' % (str(i)))
+    
     def cons(o1, o2):
         if isinstance(o1, Vec3):
             return Vec4(o1.x, o1.y, o1.z, o2)
