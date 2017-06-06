@@ -49,6 +49,8 @@ class Vec2(object):
     def dot(self, o):
         return self.x*o.x + self.y*o.y + self.z*o.z + self.w*o.w
 
+    def same(self, x, y):
+        return self.x == x and self.y == y
 
 class Vec3(object):
     def __init__(self, x, y, z):
@@ -118,6 +120,9 @@ class Vec3(object):
 
     def dot(self, o):
         return self.x*o.x + self.y*o.y + self.z*o.z + self.w*o.w
+
+    def same(self, x, y, z):
+        return self.x == x and self.y == y and self.z == z
 
 class Vec4(object):
     def __init__(self, x, y, z, w):
@@ -191,3 +196,6 @@ class Vec4(object):
 
     def dot(self, o):
         return self.x*o.x + self.y*o.y + self.z*o.z + self.w*o.w
+
+    def same(self, x, y, z, w):
+        return self.x == x and self.y == y and self.z == z and self.w == w

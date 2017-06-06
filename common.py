@@ -1,4 +1,5 @@
 from collections import namedtuple
+from vector import *
 import math
 
 def _record(props):
@@ -18,11 +19,11 @@ def _record(props):
 
 EDGE = 2
 POLY = 3
-Point = _record('x y z nx ny nz tx ty')
+Point = _record('P N T')
 Texture = _record('type col texture')
 Material = _record('amb diff spec exp')
-Light = _record('x y z Ia Id Is')
-Camera = _record('x y z ux uy uz')
+Light = _record('P Ia Id Is')
+Camera = _record('X U')
 
 def normalize(*v):
     return normalizeList(list(v))
