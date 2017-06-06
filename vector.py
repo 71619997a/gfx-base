@@ -46,6 +46,10 @@ class Vec2(object):
     def cross(self, o):
         return self.x*o.y - self.y*o.x
 
+    def dot(self, o):
+        return self.x*o.x + self.y*o.y + self.z*o.z + self.w*o.w
+
+
 class Vec3(object):
     def __init__(self, x, y, z):
         self.x = x
@@ -112,6 +116,8 @@ class Vec3(object):
     def rvec(self):
         return Vec2(self.y, self.z)
 
+    def dot(self, o):
+        return self.x*o.x + self.y*o.y + self.z*o.z + self.w*o.w
 
 class Vec4(object):
     def __init__(self, x, y, z, w):
@@ -182,3 +188,6 @@ class Vec4(object):
 
     def rvec(self):
         return Vec3(self.y, self.z, self.w)
+
+    def dot(self, o):
+        return self.x*o.x + self.y*o.y + self.z*o.z + self.w*o.w
