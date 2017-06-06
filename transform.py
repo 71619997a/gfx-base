@@ -56,15 +56,24 @@ class TransMatrix(object):
                         pt.N.normalize()
                 return mat
             else:
-                return []
+                raise TypeError("Multiplying matrix by list of tuples is deprecated, convert to vecs")
         elif isinstance(mat[0], Vec3):
             newls = []
+            print self.lst[3]
+            checkP = not self.lst[3].same(0, 0, 0, 1)
             for pt in mat:
+                print pt, 'in mat'
+                print self
                 pt = pt.post(1.)
                 nx = pt.dot(self.lst[0])
                 ny = pt.dot(self.lst[1])
                 nz = pt.dot(self.lst[2])
-                newls.append(Vec3(nx, ny, nz))
+                N = Vec3(nx, ny, nz)
+                if checkP:
+                    w = self.lst[3].dot(pt.P)
+                    if w != 1:
+                        N /= w
+                newls.append(N)
             return newls
         else:  # matrix
             return matrix.multiply(self.lst, mat)
@@ -165,16 +174,17 @@ def perspective(fovx, fovy, n, f=None):
     return mat
 
 def lookat(cam, objP):
-    objP = cam.P - objP
-    V = objP.normalized()
-    W = V.cross(cam.U).normalized()
-    U = W.cross(V)
+    V = cam.P - objP
+    V.normalize()
+    W = V.cross(cam.U)
+    #print 'W', W
+    U = W.cross(V)#.normalized()
     mat = TransMatrix()
     mat[0] = W.post(0.)
     mat[1] = U.post(0.)
     mat[2] = -V.post(0.)
     mat.invT = mat.clone().lst
-    mat[0][3] = W.dot(cam.P)
+    mat[0][3] = -W.dot(cam.P)
     mat[1][3] = -U.dot(cam.P)
     mat[2][3] = V.dot(cam.P)
     mat.invT[3][0] = -dot(mat[0][3], mat[1][3], mat[2][3],mat[0][0], mat[1][0], mat[2][0])

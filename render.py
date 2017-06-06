@@ -90,7 +90,7 @@ def renderTriangle(p1, p2, p3, mat, V, lights, texcache, zbuf, shader=phongShade
     if sn.dot(p1.P) >= snv:
         return []
     tri = triangle(p1.P.x, p1.P.y, p2.P.x, p2.P.y, p3.P.x, p3.P.y)
-    det = float((p2 - p3).lvec().cross((p1 - p3).lvec()))  #float((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y))
+    det = float((p2.P - p3.P).lvec().cross((p1.P - p3.P).lvec()))  #float((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y))
     pts = []
     if mat.amb.type:
         ambtex = getTexture(mat.amb.texture, texcache)
@@ -104,9 +104,9 @@ def renderTriangle(p1, p2, p3, mat, V, lights, texcache, zbuf, shader=phongShade
         spectex = getTexture(mat.spec.texture, texcache)
         specw = len(spectex[0]) / 4
         spech = len(spectex)
-    z1r = 1./p1.z
-    z2r = 1./p2.z
-    z3r = 1./p3.z
+    z1r = 1./p1.P.z
+    z2r = 1./p2.P.z
+    z3r = 1./p3.P.z
     tz1 = p1.T*z1r # (tx1 / z1)
     tz2 = p2.T*z2r
     tz3 = p3.T*z3r
@@ -115,7 +115,7 @@ def renderTriangle(p1, p2, p3, mat, V, lights, texcache, zbuf, shader=phongShade
         if not (0 <= x < 500 and 0 <= y < 500):
             #print 'offscreen'
             continue
-        D = getBary(x, y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, det)
+        D = getBary(x, y, p1.P.x, p1.P.y, p2.P.x, p2.P.y, p3.P.x, p3.P.y, det)
         z = p1.P.z * D.x + p2.P.z * D.y + p3.P.z * D.z
         if zbuf[y][x] >= z: 
             continue
@@ -155,10 +155,12 @@ def renderTriangle(p1, p2, p3, mat, V, lights, texcache, zbuf, shader=phongShade
                     xcor = int(tcx*specw)*4
                     ycor = int(tcy*spech)
                     Ss = [(i/255.)**2.2 for i in spectex[spech-1-ycor][xcor : xcor + 3]]
-                    
-                Ka = [Ka[i]*Sa[i] for i in xrange(3)]
-                Kd = [Kd[i]*Sd[i] for i in xrange(3)]
-                Ks = [Ks[i]*Ss[i] for i in xrange(3)]
+                try:
+                    Ka = [Ka[i]*Sa[i] for i in xrange(3)]
+                    Kd = [Kd[i]*Sd[i] for i in xrange(3)]
+                    Ks = [Ks[i]*Ss[i] for i in xrange(3)]
+                except:
+                    print Sa, Sd, Ss
         col = shader(Vec3(x, y, z), Vec3(nx, ny, nz), lights, V, Ka, Kd, Ks, mat.exp)
         pts.append((x, y, col))
     return pts
@@ -226,7 +228,7 @@ def trianglesFromVTNT(vxs, tris, norms=None, tcs=None):
     if tcs is None:
         tcs = genTCs(norms)
     for a,b,c in tris:
-        print vxs[a], norms[a], tcs[a]
+        # print vxs[a], norms[a], tcs[a]
         yield (
             Point(vxs[a], norms[a], tcs[a]),
             Point(vxs[b], norms[b], tcs[b]),
@@ -264,14 +266,14 @@ def normMapShader(x, y, z, nx, ny, nz, *_):
     return [int(nx * 127.5 + 127.5), int(ny * 127.5 + 127.5), int(nz * 127.5 + 127.5)]
 
 
-def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=phongShader, texcache={}):
+def drawObjectsNicely(objects, img, mat=dullWhite, V=Vec3(250, 250, 600), lights=niceLights, shader=phongShader, texcache={}):
     zbuf = [[None] * 500 for _ in xrange(500)]
     for type, points in objects:
         if type == EDGE:
             drawEdges(mtx, img)
         elif type == POLY:
             for pts in points:
-                img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, texcache, zbuf), shader=shader))
+                img.setPixels(renderTriangle(*pts + (mat, V, lights, texcache, zbuf), shader=shader))
                 # border = line(pts[0].x, pts[0].y, pts[1].x, pts[1].y)
                 # border += line(pts[1].x, pts[1].y, pts[2].x, pts[2].y)
                 # border += line(pts[2].x, pts[2].y, pts[0].x, pts[0].y)

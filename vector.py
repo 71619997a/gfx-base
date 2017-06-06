@@ -65,6 +65,9 @@ class Vec2(object):
     def __str__(self):
         return repr(self)
         
+    def __hash__(self):
+        return hash((self.x, self.y))
+
     def post(self, i):
         return Vec3(self.x, self.y, i)
 
@@ -84,7 +87,7 @@ class Vec2(object):
         return Vec2(self.x, self.y)
 
     def norm(self):
-        return self.dot(self)
+        return math.sqrt(self.dot(self))
     
     def normalize(self):
         self /= self.norm()
@@ -92,6 +95,9 @@ class Vec2(object):
     def normalized(self):
         return self / self.norm()
 
+    def set(self, x, y):
+        self.x = x
+        self.y = y
 
 class Vec3(object):
     def __init__(self, x, y, z):
@@ -167,6 +173,9 @@ class Vec3(object):
     def __str__(self):
         return repr(self)
         
+    def __hash__(self):
+        return hash((self.x, self.y, self.z))
+
     def post(self, i):
         return Vec4(self.x, self.y, self.z, i)
 
@@ -192,15 +201,21 @@ class Vec3(object):
         return Vec3(self.x, self.y, self.z)
 
     def norm(self):
-        return self.dot(self)
+        return math.sqrt(self.dot(self))
     
     def normalize(self):
         self /= self.norm()
 
     def normalized(self):
+        print self, self.norm()
         return self / self.norm()
 
-    
+    def set(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+
 class Vec4(object):
     def __init__(self, x, y, z, w):
         self.x = x
@@ -284,6 +299,9 @@ class Vec4(object):
     def __str__(self):
         return repr(self)
         
+    def __hash__(self):
+        return hash((self.x, self.y, self.z, self.w))
+
     def lvec(self):
         return Vec3(self.x, self.y, self.z)
 
@@ -300,10 +318,16 @@ class Vec4(object):
         return Vec4(self.x, self.y, self.z, self.w)
 
     def norm(self):
-        return self.dot(self)
+        return math.sqrt(self.dot(self))
     
     def normalize(self):
         self /= self.norm()
 
     def normalized(self):
         return self / self.norm()
+
+    def set(self, x, y, z, w):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w

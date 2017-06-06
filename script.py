@@ -179,18 +179,19 @@ def run(filename):
         a = time.time()
         tc = {}
         #draw = lambda *t, **k: drawObjectsNicely(*t, **k, shader=phongShader, mat=mat, texcache=tc, lights=lights)
-        path = [(500*math.sin(i*2./frames*math.pi)+250, 500*math.cos(i*2./frames*math.pi)+250, 500) for i in range(frames)]
+        path = [Vec3(500*math.sin(i*2./frames*math.pi)+250, 500*math.cos(i*2./frames*math.pi)+250, 500) for i in range(frames)]
         print path
         i = 0
         for frame in frameList:
-            cam.x, cam.y, cam.z = path[i]
+            cam.P = path[i]
             camT = transform.S(250.,250.,250.)*transform.T(1,1,1)*transform.perspective(120.,120., 100., 2000.) * transform.lookat(cam, Vec3(250.,250.,0.))
             camT = transform.T(250., 250., 0.) * transform.lookat(cam, Vec3(250.,250.,0.))
+            print camT
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands, camT)
             img = Image(500, 500)
-            cp = (camT*[(cam.x, cam.y, cam.z)])[0]
-            print cp
+            cp = (camT*[cam.P])[0]
+            print cp, 'should be 250 250 0'
             drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=lights)
             imgs.append(img)
             i += 1

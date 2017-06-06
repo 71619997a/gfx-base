@@ -1,6 +1,7 @@
 from edgeMtx import edgemtx, addToEdgeMtx, addTriangle, addPoint, addEdge, addCircle, drawEdges
 import math
 import transform
+from common import *
 # 4-7 are x+w
 # 2-3, 6-7 are y-h
 # 1,3,5,7 are z-d+d
@@ -25,7 +26,7 @@ def genBoxPoints(x, y, z, w, h, d):
         xcor = x + (i >> 2) * w
         ycor = y - (i >> 1) % 2 * h
         zcor = z - d + i % 2 * d
-        pts.append((xcor, ycor, zcor))
+        pts.append(Vec3(xcor, ycor, zcor))
     return pts
 
 def genBoxTris():
@@ -107,7 +108,7 @@ def genSpherePoints(x, y, z, r, step=0.02):
             xcor = x + r * math.sin(pheps) * math.cos(theps)
             ycor = y + r * math.sin(pheps) * math.sin(theps)
             zcor = z + r * math.cos(pheps)
-            pts.append((xcor, ycor, zcor))
+            pts.append(Vec3(xcor, ycor, zcor))
             pheps += phep
         theps += thep
     return pts
@@ -146,7 +147,7 @@ def genTorusPoints(x, y, z, r, R, mainStep=0.02, ringStep=0.05):
             xcor = math.cos(theta * om) * (r * math.cos(phi * im) + R) + x
             ycor = r * math.sin(phi * im) + y
             zcor = -math.sin(theta * om) * (r * math.cos(phi * im) + R) + z
-            pts.append((xcor, ycor, zcor))
+            pts.append(Vec3(xcor, ycor, zcor))
     return pts
 
         
