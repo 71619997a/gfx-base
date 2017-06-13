@@ -13,10 +13,10 @@ from multiprocessing import Pool
 
 EDGE = 2
 POLY = 3
-ka = kd = Texture(True, (0,0,0), 'jupiter.png')
-ks = Texture(False, (0, 0, 255))
+ka = kd = Texture(True, (0.8, 0.6, 0), 'jupiter.png')
+ks = Texture(False, (0.6, 0.4, 0))
 mat = Material(ka, kd, ks, 30)
-lights = render.niceLights + [Light(500, 0, 200, (30, 10, 10), (128, 30, 30), (255, 180, 180))]
+lights = render.niceLights + [Light(500, 0, 200, (0.12, 0.04, 0.04), (0.5, 0.15, 0.15), (1, 0.7, 0.7))]
 cam = Camera(250, 250, 500, 0, 0, 1)
 def err(s):
     print 'ERROR\n'+s
@@ -27,7 +27,7 @@ def warn(s):
 
 
 def runFrame(frame, commands, camT):
-    step = 0.05
+    step = 0.02
     cstack = [camT]
     print cstack[0]
     img = Image(500, 500)
@@ -184,7 +184,7 @@ def run(filename):
         i = 0
         for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
-            camT = transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(120,120, 10, 2000) * transform.lookat(cam, 250,250,0)
+            camT = transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(120,120, 10, 2000) * transform.lookat(cam, 250,250,0) # transform.T(250, 250, 0) 
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands, camT)
             lightPoints = [tuple(Point(l.x, l.y, l.z, 1, 0, 0) for l in lights)]

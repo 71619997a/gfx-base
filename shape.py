@@ -127,6 +127,14 @@ def genTorusPoints(x, y, z, r, R, mainStep=0.02, ringStep=0.05):
 
         
 if __name__ == '__main__':
-    tris = genSphereTris(0.02)
-    pts = genSpherePoints(0,0,0,100,0.02)
-    fixOverlaps(pts, tris, 15)
+    import render
+    import matplotlib.pyplot as plt
+    tris = genSphereTris(0.05)
+    vxs = genSpherePoints(0,0,0,100,0.05)
+    fixOverlaps(vxs, tris)
+    pts = list(render.trianglesFromVTNT(vxs, tris))
+    tcs = [(p.tx, p.ty) for t in pts for p in t]
+    tcs = zip(*sorted(tcs, key=lambda a:a[0]))
+    plt.plot(*tcs+['ro'])
+    plt.show()
+    print tcs
