@@ -17,7 +17,7 @@ ka = kd = Texture(True, (0,0,0), 'jupiter.png')
 ks = Texture(False, (0, 0, 255))
 mat = Material(ka, kd, ks, 30)
 lights = render.niceLights + [Light(500, 0, 200, (30, 10, 10), (128, 30, 30), (255, 180, 180))]
-cam = Camera(250, 250, 500, 1, 0, 0)
+cam = Camera(250, 250, 500, 0, 0, 1)
 def err(s):
     print 'ERROR\n'+s
     exit(1)
@@ -27,7 +27,7 @@ def warn(s):
 
 
 def runFrame(frame, commands, camT):
-    step = 0.1
+    step = 0.05
     cstack = [camT]
     print cstack[0]
     img = Image(500, 500)
@@ -179,18 +179,24 @@ def run(filename):
         a = time.time()
         tc = {}
         #draw = lambda *t, **k: drawObjectsNicely(*t, **k, shader=phongShader, mat=mat, texcache=tc, lights=lights)
-        path = [(500*math.sin(i*2./frames*math.pi)+250, 500*math.cos(i*2./frames*math.pi)+250, 500) for i in range(frames)]
+        path = [(500*math.sin(i*2./frames*math.pi)+250, 500*math.cos(i*2./frames*math.pi)+250, 0) for i in range(frames)]
         print path
         i = 0
         for frame in frameList:
             cam.x, cam.y, cam.z = path[i]
-            camT = transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(120,120, 100, 2000) * transform.lookat(cam, 250,250,0)
+            camT = transform.S(250,250,250)*transform.T(1,1,1)*transform.perspective(120,120, 10, 2000) * transform.lookat(cam, 250,250,0)
             print 'Rendering frame %d...'%(i)
             objects = runFrame(frame, commands, camT)
+            lightPoints = [tuple(Point(l.x, l.y, l.z, 1, 0, 0) for l in lights)]
+            trLights = [l.clone() for l in lights]
+            camT * lightPoints
+            for j in range(len(lights)):
+                for at in 'xyz':
+                    setattr(trLights[j], at, getattr(lightPoints[0][j], at))
             img = Image(500, 500)
             cp = (camT*[(cam.x, cam.y, cam.z)])[0]
             print cp
-            drawObjectsNicely(objects, img, V=cp, shader=render.normMapShader, mat=mat, texcache=tc, lights=lights)
+            drawObjectsNicely(objects, img, V=cp, shader=phongShader, mat=mat, texcache=tc, lights=trLights)
             imgs.append(img)
             i += 1
         '''for frame in frameList:

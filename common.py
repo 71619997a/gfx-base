@@ -13,6 +13,10 @@ def _record(props):
                 i += 1
             for k, v in kwargs.iteritems():
                 setattr(self, k, v)
+
+        def clone(self):
+            return Record(**self.__dict__)
+
     return Record
 
 
