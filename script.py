@@ -46,7 +46,7 @@ for z, rad in planetBalls:
     lastLook = [0,0,z]
     addPlanetCircle(path, lastPos, lastLook, rad * 20, 50)
 addPathMove(path, lastPos, [100000, 0, 4500], [0,0,1],[0,0,1], lastLook, [0, 0, 4500], 50)
-print len(path)
+print 'len of path:',len(path)
 lights = []
 bal = (0.7, 0.7, 0.7)
 
@@ -154,8 +154,8 @@ def runFrame(frame, commands, camT):
     return objects
 
 
-def run(filename):
-    clearAnim()
+def run(filename, start, bsize):
+    # clearAnim()
     print 'running', filename
     """
     This function runs an mdl script
@@ -219,9 +219,10 @@ def run(filename):
 
         perspective = True
         print path
-        i = 771
+        i = start
         failures = []
-        for frame in frameList[771:]:
+        frameslice = frameList[i:] if bsize == -1 else frameList[i:i+bsize]
+        for frame in frameslice:
             #try:
             cam, look = path[i]
             if perspective:
@@ -243,8 +244,7 @@ def run(filename):
             print cp
             print 'bal in script',bal
             drawObjectsNicely(objects, img, bal=bal, V=cp, shader=phongShader, texcache=tc, lights=trLights)
-            imgs.append(img)
-            imgs[-1].savePpm('anim/%s%03d.ppm' % (basename, i))
+            img.savePpm('anim/%s%03d.ppm' % (basename, i))
             # except:
             #     failures.append(i)
             #     print '\n\n\n\n\n\n\n\n\nERROR: FRAME %i WAS NOT CREATED\n\n\n\n\n\n\n\n\n\n\n' % (i)
@@ -356,4 +356,10 @@ def run(filename):
 if __name__ == '__main__':
     if len(argv) < 2:
         raise Exception('\nUsage: python script.py [mdl file]')
-    run(argv[1])
+    elif len(argv) == 2:
+        i = 0
+        N = -1
+    elif len(argv) > 3:
+        i = int(argv[2])
+        N = int(argv[3])
+    run(argv[1], i, N)
