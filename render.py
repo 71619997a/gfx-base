@@ -59,13 +59,14 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
         return 1, 0, 0
 
 #@profile
-def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks, a):
+def phongShader(x,y,z,nx,ny, nz,lights, bal, vx,vy,vz,Ka, Kd, Ks, a):
     vxx = vx - x
     vyy = vy - y
     vzz = vz - z
     vd = (vxx**2+vyy**2+vzz**2)**0.5
     Vx, Vy, Vz = vxx/vd, vyy/vd, vzz/vd
-    c = [0,0,0]
+    #print bal, Ka
+    c = [Ka[0] * bal[0], Ka[1] * bal[1], Ka[2] * bal[2]]
     for l in lights:
         lxx = l.x - x
         lyy = l.y - y
@@ -92,7 +93,14 @@ def phongShader(x,y,z,nx,ny, nz,lights, vx,vy,vz,Ka, Kd, Ks, a):
     return c
 
 #@profile
-def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader):
+def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader, bal=(0,0,0)):
+    #print 'bal in rt', bal
+    if (p1.z <= 0 or p2.z <= 0 or p3.z <= 0) \
+            or (p1.x < 0 and p2.x < 0 and p3.x < 0) \
+            or (p1.x > 500 and p2.x > 500 and p3.x > 500) \
+            or (p1.y < 0 and p2.y < 0 and p3.y < 0) \
+            or (p1.y > 500 and p2.y > 500 and p3.y > 500):  # ez clipping
+        return []
     sn = cross(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z, p1.x - p3.x, p1.y - p3.y, p1.z - p3.z)
     snx, sny, snz = sn
     snv = snx*vx+sny*vy+snz*vz
@@ -157,21 +165,30 @@ def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=p
                     xcor = int(tcx*ambw)*4
                     ycor = int(tcy*ambh)
                     Sa = [(i/255.)**2.2 for i in ambtex[ambh-1-ycor][xcor : xcor + 3]]
-                    
+                    if len(Sa) != 3:
+                        Sa = (1.,1.,1.)
+                        print 'amb tex failed. tex file:', mat.amb.texture
+
                 if mat.diff.type:
                     xcor = int(tcx*diffw)*4
                     ycor = int(tcy*diffh)
                     Sd = [(i/255.)**2.2 for i in difftex[diffh-1-ycor][xcor : xcor + 3]]
-                    
+                    if len(Sd) != 3:
+                        Sd = (1.,1.,1.)
+                        print 'diff tex failed. tex file:', mat.diff.texture
+
                 if mat.spec.type:
                     xcor = int(tcx*specw)*4
                     ycor = int(tcy*spech)
                     Ss = [(i/255.)**2.2 for i in spectex[spech-1-ycor][xcor : xcor + 3]]
-                    
+                    if len(Ss) != 3:
+                        Ss = (1.,1.,1.)
+                        print 'spec tex failed. tex file:', mat.spec.texture
+                
                 Ka = [Ka[i]*Sa[i] for i in xrange(3)]
                 Kd = [Kd[i]*Sd[i] for i in xrange(3)]
                 Ks = [Ks[i]*Ss[i] for i in xrange(3)]
-        col = shader(x, y, z, nx, ny, nz, lights, vx, vy, vz, Ka, Kd, Ks, mat.exp)
+        col = shader(x, y, z, nx, ny, nz, lights, bal, vx, vy, vz, Ka, Kd, Ks, mat.exp)
         pts.append((x, y, col))
     return pts
 
@@ -220,9 +237,32 @@ def genVertexNorms(vxs, tris):
             norms[i] = (1.,0.,0.)
     return norms
 
-def genTCs(norms):
-    return [(math.asin(n[0])/math.pi+0.5, math.asin(n[1])/math.pi+0.5) for n in norms]
+def matFromRotTo(ax, ay, az, bx, by, bz):
+    vx, vy, vz = cross(ax,ay,az,bx,by,bz)
+    s = (vx**2+vy**2+vz**2)**.5
+    c = dot(ax,ay,az,bx,by,bz)
+    Vsscp = transform.TransMatrix()
+    Vsscp[0][0] = 0
+    Vsscp[1][1] = 0
+    Vsscp[2][2] = 0
+    Vsscp[0][1] = -vz
+    Vsscp[0][2] = vy
+    Vsscp[1][0] = vz
+    Vsscp[1][2] = -vx
+    Vsscp[2][0] = -vy
+    Vsscp[2][1] = vx
+    Vsscp2 = Vsscp * Vsscp
+    T3 = transform.TransMatrix(matrix.scalarMult(Vsscp2.lst, 1./(1+c)))
+    R = transform.TransMatrix()
+    for i in range(3):
+        for j in range(3):
+            R[i][j] += Vsscp[i][j] + T3[i][j]
+    #print R.lst
+    return R
 
+
+def genTCs(vxs, norms, V):
+    return [(0.5 + math.atan2(-n[2], -n[0])/math.pi/2, 0.5 - math.asin(-n[1])/math.pi) for n in norms]
 
 def getPointsFromTriangles(m):  # assumes m is a poly mtx
     for i in range(0, len(m[0]), 3):
@@ -239,11 +279,11 @@ def getPointsFromTriangles(m):  # assumes m is a poly mtx
                Point(m[0][i+1], m[1][i+1], m[2][i+1], n2[0], n2[1], n2[2], 0, 0),
                Point(m[0][i+2], m[1][i+2], m[2][i+2], n3[0], n3[1], n3[2], 0, 0))
 
-def trianglesFromVTNT(vxs, tris, norms=None, tcs=None):
+def trianglesFromVTNT(vxs, tris, V, norms=None, tcs=None):
     if norms is None:
         norms = genVertexNorms(vxs, tris)
     if tcs is None:
-        tcs = genTCs(norms)
+        tcs = genTCs(vxs, norms, V)
     for a,b,c in tris:
         yield (
             Point(*vxs[a]+norms[a]+tcs[a]),
@@ -282,14 +322,15 @@ def normMapShader(x, y, z, nx, ny, nz, *_):
     return [int(nx * 127.5 + 127.5), int(ny * 127.5 + 127.5), int(nz * 127.5 + 127.5)]
 
 
-def drawObjectsNicely(objects, img, mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=phongShader, texcache={}):
+def drawObjectsNicely(objects, img, bal=(0,0,0), mat=dullWhite, V=(250, 250, 600), lights=niceLights, shader=phongShader, texcache={}):
+    print 'bal in DON', bal
     zbuf = [[None] * 500 for _ in xrange(500)]
-    for type, points in objects:
+    for type, mat, points in objects:
         if type == EDGE:
             drawEdges(mtx, img)
         elif type == POLY:
             for pts in points:
-                img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, texcache, zbuf), shader=shader))
+                img.setPixels(renderTriangle(*pts + (mat,) + V + (lights, texcache, zbuf), shader=shader, bal=bal))
                 # border = line(pts[0].x, pts[0].y, pts[1].x, pts[1].y)
                 # border += line(pts[1].x, pts[1].y, pts[2].x, pts[2].y)
                 # border += line(pts[2].x, pts[2].y, pts[0].x, pts[0].y)

@@ -27,9 +27,11 @@ class TransMatrix(object):
         return matrix.toStr(self.lst)
 
     def __mul__(self, mat):
+        if mat == [] or mat == () or mat is None or mat[0] == ():
+            return mat
         if isinstance(mat, TransMatrix):
             return TransMatrix(matrix.multiply(self.lst, mat.lst), matrix.multiply(mat.inv, self.inv))
-        elif isinstance(mat[0], tuple):  # point list (x,y,z
+        elif isinstance(mat[0], tuple):  # point list (x,y,z)
             checkP = self.lst[3] != [0,0,0,1]
             if isinstance(mat[0][0], Point):  # big p, in place
                 for tri in mat:
@@ -56,10 +58,23 @@ class TransMatrix(object):
                     nx = self.lst[0][3]
                     ny = self.lst[1][3]
                     nz = self.lst[2][3]
+                    w = self.lst[3][3]
                     for i in range(3):
                         nx += self.lst[0][i] * pt[i]
                         ny += self.lst[1][i] * pt[i]
                         nz += self.lst[2][i] * pt[i]
+                        if checkP:
+                            w += self.lst[3][i] * pt[i]
+                    if checkP and w != 1:
+                        if w == 0.:
+                            print '0 found in nw at', pt
+                            print self.lst
+                            rw = 1e33
+                        else:
+                            rw = 1./w
+                        nx *= rw
+                        ny *= rw
+                        nz *= rw
                     newls.append((nx,ny,nz))
                 return newls
         else:  # matrix

@@ -1,6 +1,7 @@
 from edgeMtx import edgemtx, addToEdgeMtx, addTriangle, addPoint, addEdge, addCircle, drawEdges
 import math
 import transform
+from common import *
 
 def genBoxPoints(x, y, z, w, h, d):
     # how to preserve orientation for dummies
@@ -127,12 +128,70 @@ def genTorusPoints(x, y, z, r, R, mainStep=0.02, ringStep=0.05):
 
         
 if __name__ == '__main__':
-    import render
     import matplotlib.pyplot as plt
+    def addIP(a, v):
+        for i in xrange(len(v)):
+            a[i] += v[i]
+
+    def genVertexNorms(vxs, tris):
+        norms = [[0,0,0] for _ in vxs]
+        for p1, p2, p3 in tris:
+            an1, an2, an3 = norms[p1], norms[p2], norms[p3]
+            v1, v2, v3 = vxs[p1], vxs[p2], vxs[p3]
+            v12x, v12y, v12z = tuple(v2[n]-v1[n] for n in range(3))
+            v23x, v23y, v23z = tuple(v3[n]-v2[n] for n in range(3))
+            v31x, v31y, v31z = tuple(v1[n]-v3[n] for n in range(3))
+            try:
+                c1 = cross(v31x, v31y, v31z, -v12x, -v12y, -v12z)
+                c2 = cross(v12x, v12y, v12z, -v23x, -v23y, -v23z)
+                c3 = cross(v23x, v23y, v23z, -v31x, -v31y, -v31z)
+            except ZeroDivisionError:
+                continue
+            addIP(an1, c1)
+            addIP(an2, c2)
+            addIP(an3, c3)
+        for i in range(len(norms)):
+            n = norms[i]
+            if n != [0.,0.,0.]:
+                norms[i] = normalizedTuple(n)
+            else:
+                norms[i] = (1.,0.,0.)
+        return norms
+
+    def genTCs(norms):
+        return [(0.5 + math.atan2(-n[2], -n[0])/math.pi/2, 0.5 - math.asin(-n[1])/math.pi) for n in norms]
+
+
+    def getPointsFromTriangles(m):  # assumes m is a poly mtx
+        for i in range(0, len(m[0]), 3):
+            v12x, v12y, v12z = tuple(m[n][i] - m[n][i+1] for n in range(3))
+            v23x, v23y, v23z = tuple(m[n][i+1] - m[n][i+2] for n in range(3))
+            v31x, v31y, v31z = tuple(m[n][i+2] - m[n][i] for n in range(3))
+            try:
+                n1 = normalizeList(cross(-v31x, -v31y, -v31z, v12x, v12y, v12z))
+                n2 = normalizeList(cross(-v12x, -v12y, -v12z, v23x, v23y, v23z))
+                n3 = normalizeList(cross(-v23x, -v23y, -v23z, v31x, v31y, v31z))
+            except ZeroDivisionError:
+                continue
+            yield (Point(m[0][i], m[1][i], m[2][i], n1[0], n1[1], n1[2], 0, 0),
+                   Point(m[0][i+1], m[1][i+1], m[2][i+1], n2[0], n2[1], n2[2], 0, 0),
+                   Point(m[0][i+2], m[1][i+2], m[2][i+2], n3[0], n3[1], n3[2], 0, 0))
+
+    def trianglesFromVTNT(vxs, tris, norms=None, tcs=None):
+        if norms is None:
+            norms = genVertexNorms(vxs, tris)
+        if tcs is None:
+            tcs = genTCs(norms)
+        for a,b,c in tris:
+            yield (
+                Point(*vxs[a]+norms[a]+tcs[a]),
+                Point(*vxs[b]+norms[b]+tcs[b]),
+                Point(*vxs[c]+norms[c]+tcs[c]))
+
     tris = genSphereTris(0.05)
     vxs = genSpherePoints(0,0,0,100,0.05)
     fixOverlaps(vxs, tris)
-    pts = list(render.trianglesFromVTNT(vxs, tris))
+    pts = list(trianglesFromVTNT(vxs, tris))
     tcs = [(p.tx, p.ty) for t in pts for p in t]
     tcs = zip(*sorted(tcs, key=lambda a:a[0]))
     plt.plot(*tcs+['ro'])

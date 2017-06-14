@@ -108,7 +108,10 @@ def triangle(x1, y1, x2, y2, x3, y3):
     yMax = (max(y1, y2, y3) + PRMUL - 1) >> PREC  
     xMin = (min(x1, x2, x3) + PRMUL - 1) >> PREC
     xMax = (max(x1, x2, x3) + PRMUL - 1) >> PREC
-    
+    if yMax > 500 and yMin < 0 and xMin < 0 and xMax > 500:
+        print 'large triangle detected:'
+        print x1, y1, x2, y2, x3, y3
+        return []
     # 3. use eq of line to find interior:
     # on line if (y - y1)(x1 - x2) - (x - x1)(y1 - y2) = 0
     # y(x1 - x2) - x(y1 - y2) + C = 0

@@ -6,3 +6,6 @@ g:
 
 cam:
 	python script.py camtest.mdl
+
+solar:
+	python script.py solar.mdl
