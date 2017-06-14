@@ -36,17 +36,17 @@ path = []
 
 
 
-addPathAct(path, [(Camera(100000, 0, 4500, 0, 0, 1), (0, 0, 4500))]*20)
-addPathMove(path, [100000, 0, 4500], [20000, 0, 0], [0,0,1], [0,0,1], [0, 0, 4500], [0, 0, 0], 50)
+addPathAct(path, [(Camera(100000, 0, 4500, 0, 0, 1), (0, 0, 4500))]*60)
+addPathMove(path, [100000, 0, 4500], [20000, 0, 0], [0,0,1], [0,0,1], [0, 0, 4500], [0, 0, 0], 150)
 lastPos = [20000, 0, 0]
 lastLook = [0,0,0]
 for z, rad in planetBalls:
-    addPathMove(path, lastPos, [rad * 20, 0, z], [0,0,1], [0,0,1], lastLook, [0,0,z], 20)
+    addPathMove(path, lastPos, [rad * 20, 0, z], [0,0,1], [0,0,1], lastLook, [0,0,z], 60)
     lastPos = [rad * 20, 0, z]
     lastLook = [0,0,z]
-    addPlanetCircle(path, lastPos, lastLook, rad * 20, 50)
-addPathMove(path, lastPos, [100000, 0, 4500], [0,0,1],[0,0,1], lastLook, [0, 0, 4500], 50)
-print len(path)
+    addPlanetCircle(path, lastPos, lastLook, rad * 20, 150)
+addPathMove(path, lastPos, [100000, 0, 4500], [0,0,1],[0,0,1], lastLook, [0, 0, 4500], 150)
+print 'l',len(path)
 lights = []
 bal = (0.7, 0.7, 0.7)
 
@@ -154,8 +154,7 @@ def runFrame(frame, commands, camT):
     return objects
 
 
-def run(filename):
-    clearAnim()
+def run(filename, subaru):
     print 'running', filename
     """
     This function runs an mdl script
@@ -219,9 +218,9 @@ def run(filename):
 
         perspective = True
         print path
-        i = 771
+        i = subaru
         failures = []
-        for frame in frameList[771:]:
+        for frame in frameList[subaru:subaru+150]:
             #try:
             cam, look = path[i]
             if perspective:
@@ -268,10 +267,10 @@ def run(filename):
         print 'Images saved in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         print 'Creating animation... (converting to gif)'
         a = time.time()
-        makeAnimation(basename, 'ppm')
+        #makeAnimation(basename, 'ppm')
         print 'Animation created in %f ms' % (int((time.time() - a) * 1000000)/1000.)
         # clearAnim()
-        animate(basename)
+        #animate(basename)
         print failures
     else:
         cstack = [TransMatrix()]
@@ -356,4 +355,4 @@ def run(filename):
 if __name__ == '__main__':
     if len(argv) < 2:
         raise Exception('\nUsage: python script.py [mdl file]')
-    run(argv[1])
+    run(argv[1], int(argv[2]))

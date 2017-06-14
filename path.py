@@ -5,7 +5,7 @@ def _lerp(s, e, l):
 def addPathAct(path, act):
     path.extend(act)
     print len(path)
-    path.extend([act[-1]] * 1)
+    path.extend([act[-1]] * 15)
 
 
 def addPathMove(path, camPStart, camPEnd, camUStart, camUEnd, lookStart, lookEnd, frames):
