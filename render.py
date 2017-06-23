@@ -12,6 +12,7 @@ import edgeMtx
 import math
 from common import *
 from triangle import triangle
+from crender import phongShader
 #from functools import lru_cache
 
 
@@ -59,38 +60,38 @@ def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
         return 1, 0, 0
 
 #@profile
-def phongShader(x,y,z,nx,ny, nz,lights, bal, vx,vy,vz,Ka, Kd, Ks, a):
-    vxx = vx - x
-    vyy = vy - y
-    vzz = vz - z
-    vd = (vxx**2+vyy**2+vzz**2)**0.5
-    Vx, Vy, Vz = vxx/vd, vyy/vd, vzz/vd
-    #print bal, Ka
-    c = [Ka[0] * bal[0], Ka[1] * bal[1], Ka[2] * bal[2]]
-    for l in lights:
-        lxx = l.x - x
-        lyy = l.y - y
-        lzz = l.z - z
-        ld = lxx**2+lyy**2+lzz**2
-        Lmx , Lmy, Lmz = lxx/ld, lyy/ld, lzz/ld
-        Lmn = Lmx * nx + Lmy * ny + Lmz * nz
-        Rmx = 2 * Lmn * nx - Lmx
-        Rmy = 2 * Lmn * ny - Lmy
-        Rmz = 2 * Lmn * nz - Lmz
-        diff = 0 if Lmn < 0 else Lmn
-        try:
-            RmV = Rmx*Vx+Rmy*Vy+Rmz*Vz
-            if RmV < 0:
-                spec = 0
-            else:
-                spec = RmV**a
-        except:
-            spec = 1
-        for i in xrange(3):
-            c[i] += Ka[i]*l.Ia[i] + Kd[i]*l.Id[i]*diff + Ks[i]*l.Is[i]*spec
-    for i in xrange(3):
-        c[i] = int(255*(1 if c[i] > 1 else c[i]**(1/2.2)))
-    return c
+# def phongShader(x,y,z,nx,ny, nz,lights, bal, vx,vy,vz,Ka, Kd, Ks, a):
+#     vxx = vx - x
+#     vyy = vy - y
+#     vzz = vz - z
+#     vd = (vxx**2+vyy**2+vzz**2)**0.5
+#     Vx, Vy, Vz = vxx/vd, vyy/vd, vzz/vd
+#     #print bal, Ka
+#     c = [Ka[0] * bal[0], Ka[1] * bal[1], Ka[2] * bal[2]]
+#     for l in lights:
+#         lxx = l.x - x
+#         lyy = l.y - y
+#         lzz = l.z - z
+#         ld = lxx**2+lyy**2+lzz**2
+#         Lmx , Lmy, Lmz = lxx/ld, lyy/ld, lzz/ld
+#         Lmn = Lmx * nx + Lmy * ny + Lmz * nz
+#         Rmx = 2 * Lmn * nx - Lmx
+#         Rmy = 2 * Lmn * ny - Lmy
+#         Rmz = 2 * Lmn * nz - Lmz
+#         diff = 0 if Lmn < 0 else Lmn
+#         try:
+#             RmV = Rmx*Vx+Rmy*Vy+Rmz*Vz
+#             if RmV < 0:
+#                 spec = 0
+#             else:
+#                 spec = RmV**a
+#         except:
+#             spec = 1
+#         for i in xrange(3):
+#             c[i] += Ka[i]*l.Ia[i] + Kd[i]*l.Id[i]*diff + Ks[i]*l.Is[i]*spec
+#     for i in xrange(3):
+#         c[i] = int(255*(1 if c[i] > 1 else c[i]**(1/2.2)))
+#     return c
 
 #@profile
 def renderTriangle(p1, p2, p3, mat, vx, vy, vz, lights, texcache, zbuf, shader=phongShader, bal=(0,0,0)):

@@ -2,16 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct {
-    double x;
-    double y;
-    double z;
-    double* Ia;
-    double* Id;
-    double* Is;
-} Light;
-
-void phongShader(int x, int y, double z, double nx, double ny, double nz, int nlights, Light *lights, double* bal, double vx, double vy, double vz, double *Ka, double *Kd, double *Ks, int a, double *Cin, int *Cout) {
+static void c_phongShader(int x, int y, double z, double nx, double ny, double nz, int nlights, double *lxs, double *lys, double *lzs, double **Ias, double **Ids, double **Iss, double* bal, double vx, double vy, double vz, double *Ka, double *Kd, double *Ks, int a, double *Cin, int *Cout) {
     double vxx = vx - x;
     double vyy = vy - y;
     double vzz = vz - z;
@@ -37,12 +28,11 @@ void phongShader(int x, int y, double z, double nx, double ny, double nz, int nl
     double diff;
     double RmV;
     double spec;
-    Light *l;
     int j;
-    for(l = lights; l < lights + nlights; l++) {
-        lxx = l->x - x;
-        lyy = l->y - y;
-        lzz = l->z - z;
+    for(i = 0; i < nlights; i++) {
+        lxx = lxs[i] - x;
+        lyy = lys[i] - y;
+        lzz = lzs[i] - z;
         ld = sqrt(lxx*lxx+lyy*lyy+lzz*lzz);
         Lmx = lxx / ld;
         Lmy = lyy / ld;
@@ -63,7 +53,7 @@ void phongShader(int x, int y, double z, double nx, double ny, double nz, int nl
             spec = pow(RmV, a);
         }
         for(j = 0; j < 3; j++) {
-            Cin[j] += Ka[j]*l->Ia[j] + Kd[j]*l->Id[j]*diff + Ks[j]*l->Is[j]*spec;
+            Cin[j] += Ka[j]*Ias[i][j] + Kd[j]*Ids[i][j]*diff + Ks[j]*Iss[i][j]*spec;
         }
     }
     for(i = 0; i < 3; i++) {
@@ -82,10 +72,12 @@ int main() {
     double Ia[] = {1., 0.5, 0.6};
     double *Id = Ia;
     double Is[] = {1., 0.8, 0.9};
-    Light lights[] = {
-        {400, 300, 350, Ia, Id, Is},
-        {500, 250, 250, Ia, Id, Is}
-    };
+    double *Ias[] = {Ia, Ia};
+    double *Ids[] = {Id, Id};
+    double *Iss[] = {Is, Is};
+    double lxs[] = {400, 500};
+    double lys[] = {300, 250};
+    double lzs[] = {350, 250};
     double bal[] = {0.1, 0.2, 0.1};
     double vx = 250;
     double vy = 250;
@@ -96,6 +88,6 @@ int main() {
     int a = 10;
     double *Cin = calloc(sizeof(double), 3);
     int *Cout = calloc(sizeof(int), 3);
-    phongShader( x,  y,  z,  nx,  ny,  nz,  nlights, lights, bal,  vx,  vy,  vz,  Ka,  Kd, Ks,  a,  Cin,  Cout);
+    phongShader( x,  y,  z,  nx,  ny,  nz,  nlights, lxs, lys, lzs, Ias, Ids, Iss, bal,  vx,  vy,  vz,  Ka,  Kd, Ks,  a,  Cin,  Cout);
     printf("%d %d %d", Cout[0], Cout[1], Cout[2]);
 }
