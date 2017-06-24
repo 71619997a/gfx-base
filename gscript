@@ -1,0 +1,167 @@
+# CENTER
+push
+move
+250 320 0
+rotate
+y -60
+scale
+1.1 1.1 1.1
+# BODY
+push
+scale
+1 0.35 1
+move
+0 40 0
+sphere
+0 0 0 50
+move
+0 80 0
+sphere
+0 0 0 50
+move
+0 -160 0
+sphere
+0 0 0 50
+move
+0 -80 0
+sphere
+0 0 0 50
+pop
+# HEAD
+push
+move
+0 76 0
+scale
+1 0.8 1
+sphere
+0 0 0 30
+move
+-10 8 0
+sphere
+0 0 20 5
+circle
+0 0 20 5
+move
+20 0 0
+sphere
+0 0 20 5
+circle
+0 0 20 5
+move
+-10 -8 0
+bezier
+-15 -3 -7 -18 7 -18 15 -3
+bezier
+-15 -4 -7 -19 7 -19 15 -4
+bezier
+-15 -5 -7 -20 7 -20 15 -5
+bezier
+-15 -6 -7 -21 7 -21 15 -6
+bezier
+-15 -7 -7 -22 7 -22 15 -7
+pop
+# RIGHT ARM
+push
+move
+40 35 0
+rotate
+z 30
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -18 18
+sphere
+0 0 0 20
+move
+0 -10 23
+sphere
+0 0 0 20
+pop
+# LEFT ARM
+push
+move
+-40 35 0
+rotate
+z -30
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -18 18
+sphere
+0 0 0 20
+move
+0 -10 23
+sphere
+0 0 0 20
+pop
+# RIGHT LEG
+push
+move
+20 -68 0
+scale
+1 0.8 1
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+box
+-12 0 10 24 60 20
+pop
+# LEFT LEG
+push
+move
+-20 -68 0
+scale
+1 0.8 1
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+move
+0 -28 0
+sphere
+0 0 0 20
+box
+-12 0 10 24 60 20
+pop
+display

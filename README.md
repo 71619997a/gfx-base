@@ -1,2 +1,2 @@
-# gfx-base
-base module for graphics
+# shapes
+boxes, torii, and sphere points

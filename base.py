@@ -11,7 +11,7 @@ rgbStrTable = [str(i) for i in range(256)]
 class Image(object):
         def __init__(self, w, h, pix=None):
                 if pix is None:
-                        self.pixels = [[(0,0,0) for _ in xrange(w)] for __ in xrange(h)]
+                        self.pixels = [[(255,255,255) for _ in xrange(w)] for __ in xrange(h)]
                 else:
                         self.pixels = pix
                 self.width = w
@@ -54,7 +54,7 @@ class Image(object):
         def setPixels(self, ls):  # list of (x, y, color)
                 for x, y, col in ls:
                         self.setPixel(x, y, col)
-                
+
         def fromFunc(self, func):
                 for y in xrange(self.height):
                         for x in xrange(self.width):
@@ -62,7 +62,7 @@ class Image(object):
 
         def flipUD(self):
                 return Image(self.width, self.height, self.pixels[::-1])
-    
+
         @staticmethod
         def fromImage(filename):  # use as img = Image.fromImage(...)
                 with open(filename) as f:
@@ -84,4 +84,11 @@ class Image(object):
                         img.setPixel(s3 % width, s3 / width, rgb)
                 return img
 
-        
+def makeAnimation(name, format='png'):
+        os.system('convert -delay 5 anim/%s*.%s %s.gif' % (name, format, name))
+
+def clearAnim():
+        os.system('rm anim/*')
+
+def animate(name):
+        os.system('animate %s.gif' % (name))

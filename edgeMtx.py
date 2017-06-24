@@ -3,6 +3,7 @@ from line import line
 import triangle
 import matrix
 import math
+from common import *
 
 
 def edgemtx():
@@ -11,6 +12,10 @@ def edgemtx():
 def addEdgeMtxs(m1, m2):
     m = [m1[i] + m2[i] for i in range(len(m1))]
     return m
+
+def addToEdgeMtx(m, m2):
+    for i in range(len(m)):
+        m[i] += m2[i]
 
 def addPoint(m, x, y, z):
     m[0].append(x)
@@ -27,7 +32,6 @@ def addEdgesFromParam(m, fx, fy, fz, step):
     lastpt = (fx(0), fy(0), fz(0))
     while t <= 1.001:
         pt = (fx(t), fy(t), fz(t))
-        print pt
         addEdge(m, *lastpt + pt)
         lastpt = pt
         t += step
@@ -126,25 +130,39 @@ def addTriangle(m, *args):
     for i in range(0, 9, 3):
         addPoint(m, *args[i : i+3])
 
-def drawEdges(m, image, color=(255, 0, 0)):  # draws the edges to an image
+def drawEdges(m, image, color=(0, 0, 0)):  # draws the edges to an image
     for i in range(0, len(m[0]) - 1, 2):
         lin = line(m[0][i], m[1][i], m[0][i + 1], m[1][i + 1])
         coloredlin = [xy + (color,) for xy in lin]
         image.setPixels(coloredlin)
 
-def drawTriangles(m, image, color=(255, 0, 0), bordercol=(255,255,255)):
+def drawTriangles(m, image, wireframe=False, color=(255, 0, 0), bordercol=(0, 0, 0), hasBorder=True, culling=True):
     triangles = []
     for i in range(0, len(m[0]) - 2, 3):
-        triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], sum(m[2][i : i+3])])
-    ordTris = sorted(triangles, key=lambda l: l[6])
+        triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], m[2][i], m[2][i + 1], m[2][i + 2]])
+    ordTris = sorted(triangles, key=lambda l: l[6]+l[7]+l[8])
     for t in ordTris:
-        tri = triangle.triangle(*t[:6])
-        border = line(*t[:4])
-        border.extend(line(*t[2:6]))
-        border.extend(line(*t[:2] + t[4:6]))
-        coloredtri = [xy + (color,) for xy in tri] + [xy + (bordercol,) for xy in border]
-        image.setPixels(coloredtri)
+        if culling:
+            x12 = t[0] - t[2]
+            y12 = t[1] - t[3]
+            x23 = t[0] - t[4]
+            y23 = t[1] - t[5]
+            if x12 * y23 - x23 * y12 <= 0:
+                continue
+        if not wireframe:
+            tri = triangle.triangle(*t[:6])
+            coloredtri = [xy + (color,) for xy in tri]
+        else:
+            coloredtri = []
+        if hasBorder:
+            border = line(*t[:4])
+            border.extend(line(*t[2:6]))
+            border.extend(line(*t[:2] + t[4:6]))
+            coloredtri += [xy + (bordercol,) for xy in border]
+            image.setPixels(coloredtri)
+    
 
+            
 def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
     mcols = edgemtx() + [[]]
     for m, col in ms:
