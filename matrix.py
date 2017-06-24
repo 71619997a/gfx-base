@@ -33,7 +33,7 @@ def multiply(fac1, fac2):  # chooses between matrix or scalar multiplication
 
 def mtxMult(m1, m2):
         if len(m1[0]) != len(m2):
-                raise ArithmeticError("Size mismatch in matrices")
+                raise ArithmeticError("Size mismatch in matrices: %dx%d * %dx%d"%(len(m1[0]),len(m1),len(m2[0]),len(m2)))
         m2t = transpose(m2)
         mret = []
         for row in m1:

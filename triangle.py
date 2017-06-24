@@ -1,267 +1,157 @@
-from line import line
-import transform
-from matrix import multiply
-from os import chdir
-from png import Reader
-from time import time
-from base import Image
-import obj
-import edgeMtx
+from line import lineByY, line
+#import transform
+#from matrix import multiply
+#import matrix
+#from os import chdir
+#from multiprocessing import Pool
+#from png import Reader
+#from time import time
+#from base import Image
+#import obj
+#import edgeMtx
+import math
+from common import *
+
 #chdir('/storage/emulated/0/qpython/scripts/gfx-base/gfx-base')
 
 
-def sortedInds(lst):
-    fix = enumerate(lst)
-    sort = sorted(fix, key=lambda t: t[1])
-    return tuple(zip(*sort)[::-1])
+# def sortedInds(lst):
+#     fix = enumerate(lst)
+#     sort = sorted(fix, key=lambda t: t[1])
+#     return tuple(zip(*sort)[::-1])
+
+# def inOrder(lst, order):
+#     return [lst[i] for i in order]
+
+# def topTriangle(yBase, x1Base, x2Base, x1Top, y1Top):
+#     pts = []
+#     if x1Base > x1Top:
+#         border1 = lineByY(x1Base, yBase, x1Top, y1Top)
+#     else:
+#         border1 = lineByY(x1Base, yBase, x1Top, y1Top)[::-1]
+#     if x2Base > x1Top:
+#         border2 = lineByY(x2Base, yBase, x1Top, y1Top)
+#     else:
+#         border2 = lineByY(x2Base, yBase, x1Top, y1Top)[::-1]
+#     i = 0
+#     for y in range(int(math.ceil(y1Top)), int(math.ceil(yBase))):
+#         try:
+#             border1[i][0]
+#             border2[i][0]
+#         except IndexError:
+#             continue
+#         for x in range(border1[i][0], border2[i][0]+1):
+#             pts.append((x, y))
+        
+#         i += 1
+#     return pts + border1 + border2
+
+# def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
+#     pts = []
+#     if x1Base > x1Bot:
+#         border1 = lineByY(x1Base, yBase, x1Bot, y1Bot)[::-1]
+#     else:
+#         border1 = lineByY(x1Base, yBase, x1Bot, y1Bot)
+#     if x2Base > x1Bot:
+#         border2 = lineByY(x2Base, yBase, x1Bot, y1Bot)[::-1]
+#     else:
+#         border2 = lineByY(x2Base, yBase, x1Bot, y1Bot)
+#     i = 0
+#     for y in range(int(math.ceil(yBase)), int(math.ceil(y1Bot + 1))):
+#         try:
+#             border1[i][0]
+#             border2[i][0]
+#         except IndexError:
+#             continue
+#         for x in range(border1[i][0], border2[i][0]+1):
+#             pts.append((x, y))
+#         i += 1
+#     return pts + border1 + border2
 
 
-def inOrder(lst, order):
-    return [lst[i] for i in order]
-
-
-def topTriangle(yBase, x1Base, x2Base, x1Top, y1Top):
+PREC = 20
+PRMUL = 1 << PREC
+def triangle(x1, y1, x2, y2, x3, y3):
+    if x1 == 225 or x2 == 225 or x3 == 225:
+        print x3 - x1, x2 - x1, x3 - x2
     pts = []
-    if x1Base > x1Top:
-        border1 = line(x1Base, yBase, x1Top, y1Top)
-    else:
-        border1 = line(x1Base, yBase, x1Top, y1Top)[::-1]
-    if x2Base > x1Top:
-        border2 = line(x2Base, yBase, x1Top, y1Top)
-    else:
-        border2 = line(x2Base, yBase, x1Top, y1Top)[::-1]
-    i1 = i2 = 0
-    for y in range(y1Top, yBase):
-        while border1[i1][1] != y:
-            i1 += 1
-        while border2[i2][1] != y:
-            i2 += 1
-        for x in range(border1[i1][0], border2[i2][0] + 1):
-            pts.append((x, y))
+    # 1. floating point -> fixed point
+    x1 = int(round(x1 * PRMUL))  # integer + n bytes of fixed prec
+    x2 = int(round(x2 * PRMUL))
+    x3 = int(round(x3 * PRMUL))
+    y1 = int(round(y1 * PRMUL))
+    y2 = int(round(y2 * PRMUL))
+    y3 = int(round(y3 * PRMUL))
+
+    # 2. find bounding box
+    yMin = (min(y1, y2, y3) + PRMUL - 1) >> PREC  # integer, +2^n-1 b/c rounding
+    yMax = (max(y1, y2, y3) + PRMUL - 1) >> PREC  
+    xMin = (min(x1, x2, x3) + PRMUL - 1) >> PREC
+    xMax = (max(x1, x2, x3) + PRMUL - 1) >> PREC
+    if yMax > 500 and yMin < 0 and xMin < 0 and xMax > 500:
+        print 'large triangle detected:'
+        print x1, y1, x2, y2, x3, y3
+        return []
+    # 3. use eq of line to find interior:
+    # on line if (y - y1)(x1 - x2) - (x - x1)(y1 - y2) = 0
+    # y(x1 - x2) - x(y1 - y2) + C = 0
+    # increment y = x1 - x2
+    # incr3ement x = y2 - y1
+    # C = x1(y1 - y2)-y1(x1 - x2)
+    # only fill left & flat top edges (by convention), so inc c if we have one
+    x12 = x1 - x2  # integer + n bytes of fixed prec
+    y12 = y1 - y2
+    x23 = x2 - x3
+    y23 = y2 - y3
+    x31 = x3 - x1
+    y31 = y3 - y1
+    fx12 = x12 << PREC  # integer + 2n bytes of fixed prec
+    fy12 = y12 << PREC
+    fx23 = x23 << PREC
+    fy23 = y23 << PREC
+    fx31 = x31 << PREC
+    fy31 = y31 << PREC
+    c12 = x1*y12-y1*x12  # integer + 2n bytes of fixed prec
+    c23 = x2*y23-y2*x23
+    c31 = x3*y31-y3*x31
+    if y12 < 0 or (y12 == 0 and x12 > 0):
+        c12 += 2
+    if y12 < 0 or (y23 == 0 and x23 > 0):
+        c23 += 2
+    if y31 < 0 or (y31 == 0 and x31 > 0):
+        c31 += 2
+    x = xMin
+    y = yMin
+    fx = x << PREC
+    fy = y << PREC
+    A12start = fy*x12 - fx*y12 + c12  # integer + 2n bytes of fixed prec
+    A23start = fy*x23 - fx*y23 + c23
+    A31start = fy*x31 - fx*y31 + c31
+    #print A12start, A23start, A31start
+    # 4. Loop
+    xr = xrange(xMin, xMax)
+    for y in xrange(yMin, yMax):
+        # start at x=xmin, y=whatever
+        A12 = A12start
+        A23 = A23start
+        A31 = A31start
+        hbin=False
+        for x in xr:
+            if A12 > 0 and A23 > 0 and A31 > 0:
+                pts.append((x, y))
+                hbin=True
+            elif hbin:
+                break
+            A12 -= fy12
+            A23 -= fy23
+            A31 -= fy31
+            #print A12, A23, A31
+        # discard A, move Astart down
+        A12start += fx12
+        A23start += fx23
+        A31start += fx31
     return pts
-
-
-def botTriangle(yBase, x1Base, x2Base, x1Bot, y1Bot):
-    pts = []
-    if x1Base > x1Bot:
-        border1 = line(x1Base, yBase, x1Bot, y1Bot)[::-1]
-    else:
-        border1 = line(x1Base, yBase, x1Bot, y1Bot)
-    if x2Base > x1Bot:
-        border2 = line(x2Base, yBase, x1Bot, y1Bot)[::-1]
-    else:
-        border2 = line(x2Base, yBase, x1Bot, y1Bot)
-    i1 = i2 = 0
-    for y in range(yBase, y1Bot + 1):
-        while border1[i1][1] != y:
-            i1 += 1
-        while border2[i2][1] != y:
-            i2 += 1
-        for x in range(border1[i1][0], border2[i2][0] + 1):
-            pts.append((x, y))
-    return pts
-
-def baseTriangle(yb, xb1, xb2, xp, yp):
-    yb, xb1, xb2, xp, yp = int(yb), int(xb1), int(xb2), int(xp), int(yp)
-    if yp >= yb:
-        return botTriangle(yb, xb1, xb2, xp, yp)
-    return topTriangle(yb, xb1, xb2, xp, yp)
-
-def triangle(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
-    ys, order = sortedInds([y1, y2, y3])
-    xs = inOrder([x1, x2, x3], order)
-    if xs[2] == xs[0]:
-        x = xs[0]
-    else:
-        slope = (ys[2] - ys[0]) / float(xs[2] - xs[0])
-        if slope == 0:
-            x = xs[2]
-        else:
-            x = (ys[1] - ys[0]) / slope + xs[0]
-    top = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[2], ys[2])
-    bot = baseTriangle(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
-    return top + bot
-#  BARY LIE FUNCTIONS
-
-
-
-
-def topTriangleC(yBase, x1Base, x2Base, x1Top, y1Top):
-    pts = []
-    if x1Base > x1Top:
-        border1 = line(x1Base, yBase, x1Top, y1Top)
-    else:
-        border1 = line(x1Base, yBase, x1Top, y1Top)[::-1]
-    if x2Base > x1Top:
-        border2 = line(x2Base, yBase, x1Top, y1Top)
-    else:
-        border2 = line(x2Base, yBase, x1Top, y1Top)[::-1]
-    i1 = i2 = 0
-    for y in range(y1Top, yBase):
-        while border1[i1][1] != y:
-            i1 += 1
-        while border2[i2][1] != y:
-            i2 += 1
-        pts.append((y, border1[i1][0], border2[i2][0]))
-    return pts
-
-
-def botTriangleC(yBase, x1Base, x2Base, x1Bot, y1Bot):
-    pts = []
-    if x1Base > x1Bot:
-        border1 = line(x1Base, yBase, x1Bot, y1Bot)[::-1]
-    else:
-        border1 = line(x1Base, yBase, x1Bot, y1Bot)
-    if x2Base > x1Bot:
-        border2 = line(x2Base, yBase, x1Bot, y1Bot)[::-1]
-    else:
-        border2 = line(x2Base, yBase, x1Bot, y1Bot)
-    i1 = i2 = 0
-    for y in range(yBase, y1Bot + 1):
-        while border1[i1][1] != y:
-            i1 += 1
-        while border2[i2][1] != y:
-            i2 += 1
-        pts.append((y, border1[i1][0], border2[i2][0]))
-    return pts
-
-def baseTriangleC(yb, xb1, xb2, xp, yp):
-    yb, xb1, xb2, xp, yp = int(yb), int(xb1), int(xb2), int(xp), int(yp)
-    if yp >= yb:
-        return botTriangleC(yb, xb1, xb2, xp, yp), True
-    return topTriangleC(yb, xb1, xb2, xp, yp), False
-
-def triangleC(x1, y1, x2, y2, x3, y3):  # XXX doesnt handle flat well
-    ys, order = sortedInds([y1, y2, y3])
-    xs = inOrder([x1, x2, x3], order)
-    if xs[2] == xs[0]:
-        x = xs[0]
-    else:
-        slope = (ys[2] - ys[0]) / float(xs[2] - xs[0])
-        if slope == 0:
-            x = xs[2]
-        else:
-            x = (ys[1] - ys[0]) / slope + xs[0]
-    t1, isBot1 = baseTriangleC(ys[1], min(x, xs[1]), max(x, xs[1]), xs[2], ys[2])
-    t2, _ = baseTriangleC(ys[1], min(x, xs[1]), max(x, xs[1]), xs[0], ys[0])
-    return t2 + t1 if isBot1 else t1 + t2
-
-
-def getBary(x,y,x1,y1,x2,y2,x3,y3,det):
-    d1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / det
-    d2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / det
-    return d1, d2, 1-d1-d2
-
-
-def drawTexturedTri(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3, rgb, bgcol): #1-6 vertices, 7-12 tcors, 13 tex rgb, 14 bg color
-    a = time()
-    pts = []
-    l = len(rgb)-1
-    th = len(rgb) - 1
-    tw = len(rgb[0]) / 4 - 1
-    tri = triangleC(x1,y1,x2,y2,x3,y3)
-    idet = 1/float((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3))
-    c1 = (y2 - y3) * idet
-    c2 = (y3 - y1) * idet
-    c3 = (y1 - y2) * idet
-    cy1 = (x3 - x2) * idet
-    cy2 = (x1 - x3) * idet
-    cy3 = (x2 - x1) * idet
-    tcxinc = c1*tx1+c2*tx2+c3*tx3
-    tcyinc = cy1*ty1+cy2*ty2+cy3*ty3
-    d1,d2,d3 = getBary(tri[0][1], tri[0][0], x1, y1, x2, y2, x3, y3, 1/idet)
-    tcx = tx1*d1+tx2*d2+tx3*d3
-    tcy = ty1*d1+ty2*d2+ty3*d3
-    for y, x1, x2 in tri:
-        for x in range(x1, x2 + 1):
-            # print tc[0], tc[1]
-            if 1>=tcx>=0 and 1>=tcy>=0:
-                xcor = int(tcx*tw)*4
-                ycor = int(tcy*th)
-                if rgb[l-ycor][xcor + 3] == 255:
-                    pts.append((x, y, rgb[l-ycor][xcor:xcor+3]))
-            else:
-                pts.append((x, y, bgcol))
-            tcx += tcxinc
-        tcy += tcyinc
-    return pts
-
-
-def textureTriMtxs(ms, img, texcache):
-    mcols = [[]]*8
-    for m, t, texture, col in ms:
-        if texture is None:
-            rgb = None
-        else:
-            if texture not in texcache:
-                print texture
-                r = Reader(texture)
-                rgb = list(r.asRGBA()[2])
-                texcache[texture] = rgb
-            rgb = texcache[texture]
-        mcol = m + t + [[rgb] * len(m[0])] + [[col] * len(m[0])]
-        mcols = edgeMtx.addEdgeMtxs(mcols, mcol)
-    triangles = []
-    for i in range(0, len(mcols[0]) - 2, 3):
-        # print i, mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]
-        triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i], mcols[5][i], mcols[4][i+1], mcols[5][i+1], mcols[4][i+2], mcols[5][i+2], mcols[6][i], mcols[7][i]])
-    ordTris = sorted(triangles, key=lambda l: l[6])
-    times = 0
-    for t in ordTris:
-        a = time()
-        if t[13] is not None:
-            img.setPixels(drawTexturedTri(*t[:6] + t[7:]))
-        else:
-            tri = triangle(*t[:6])
-            coloredtri = [xy + (t[14],) for xy in tri]
-            img.setPixels(coloredtri)
-        times += time() - a
-    print times / 1.0 / len(ordTris) * 1000
-
-def textureTest():
-    help(Reader)
-    r = Reader(file=open('tesx.png'))
-    rgb = list(r.asRGBA()[2])
-    print len(rgb),len(rgb[0])
-    img = Image(500,500)
-    drawTexturedTri(150,150,300,100,100,300,1,0,0,1,1,1,rgb,(255,255,0),img)
-    img.savePpm('t.ppm')
-
-def mariotest():
-    from time import time
-    tc = {}
-    chdir('mario')
-    triset = obj.parse('mario.obj','mario.mtl')
-    mat = transform.T(250, 400, 0) * transform.R('z', 180) * transform.S(1.5,1.5,1.5)
-    for i in range(len(triset)):
-        triset[i][0] = mat * triset[i][0]
-    img = Image(500,500)
-    mat = transform.T(250,400,0)*transform.R('y',5)*transform.T(-250,-400,0)
-    textureTriMtxs(triset,img,tc)
-    print len(tc)
-    img.display()
-    for i in range(72):
-        print 'making image...',
-        a = time()
-        img = Image(500,500)
-        print (time() - a) * 1000, 'ms'
-        print 'transforming...',
-        a = time()
-        for j in range(len(triset)):
-            triset[j][0] = mat * triset[j][0]
-        print (time() - a) * 1000, 'ms'
-        print 'texturing...',
-        a = time()
-        textureTriMtxs(triset, img,tc)
-        print (time() - a) * 1000, 'ms'
-        print 'saving...',
-        a = time()
-        img.savePpm('../animar/%d.ppm'%(i))
-        print (time() - a) * 1000, 'ms'
-        print i, 'drawn'
-
-def triCTest():
-    print triangleC(0,200,50,100,150,175)
-    
+            
 if __name__ == '__main__':
-    mariotest()
+    pass
+

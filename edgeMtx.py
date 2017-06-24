@@ -1,7 +1,10 @@
 from base import Image
 from line import line
-from triangle import triangle
+import triangle
 import matrix
+import math
+from common import *
+
 
 def edgemtx():
     return [[],[],[],[]]
@@ -9,6 +12,10 @@ def edgemtx():
 def addEdgeMtxs(m1, m2):
     m = [m1[i] + m2[i] for i in range(len(m1))]
     return m
+
+def addToEdgeMtx(m, m2):
+    for i in range(len(m)):
+        m[i] += m2[i]
 
 def addPoint(m, x, y, z):
     m[0].append(x)
@@ -29,30 +36,137 @@ def addEdgesFromParam(m, fx, fy, fz, step):
         lastpt = pt
         t += step
 
+def polyParametrize(poly):
+    print poly
+    def f(t):
+        ret = 0
+        for i in range(len(poly)):
+            ret += poly[len(poly) - 1 - i] * t ** i
+        return ret
+    return f
+
+def addCircle(m, cx, cy, cz, r, step):
+    def x(t):
+        return math.cos(2*math.pi*t)*r + cx
+    def y(t):
+        return math.sin(2*math.pi*t)*r + cy
+    z = lambda t: cz
+    addEdgesFromParam(m,x,y,z,step)
+
+    
+def addBezier(m, x1, y1, x2, y2, x3, y3, x4, y4, step):
+    bezMatrix = [
+        [-1, 3, -3, 1],
+        [3, -6, 3, 0],
+        [-3, 3, 0, 0],
+        [1, 0, 0, 0]
+    ]
+    xcoef = matrix.multiply(bezMatrix, matrix.transpose([[x1, x2, x3, x4]]))
+    ycoef = matrix.multiply(bezMatrix, matrix.transpose([[y1, y2, y3, y4]]))
+    x = polyParametrize(matrix.transpose(xcoef)[0])
+    y = polyParametrize(matrix.transpose(ycoef)[0])
+    z = lambda t: 0
+    addEdgesFromParam(m, x, y, z, step)
+
+def addHermite(m, p0x, p0y, p1x, p1y, m0x, m0y, m1x, m1y, step):
+    hermMatrix = [
+        [2, -2, 1, 1],
+        [-3, 3, -2, -1],
+        [0, 0, 1, 0],
+        [1, 0, 0, 0]
+    ]
+    xcoef = matrix.multiply(hermMatrix, matrix.transpose([[p0x, p1x, m0x, m1x]]))
+    ycoef = matrix.multiply(hermMatrix, matrix.transpose([[p0y, p1y, m0y, m1y]]))
+    x = polyParametrize(matrix.transpose(xcoef)[0])
+    y = polyParametrize(matrix.transpose(ycoef)[0])
+    z = lambda t: 0
+    addEdgesFromParam(m, x, y, z, step)
+
+def linspace(p1, stop=None, step=None):
+    if stop is None:
+        stop = p1
+        start = 0
+        step = 1
+    elif step is None:
+        start = p1
+        step = 1
+    else:
+        start = p1
+    i = start
+    while i < stop:
+        yield i
+        i += step
+    
+def sphere(r, step):
+    # theta along base circle, phi up
+    # radius of base circ = cos phi
+    # height of circ = z = cos phi
+    # x = cos theta sin phi
+    # y = sin theta sin phi
+    # phi from 0 to pi, theta from 0 to 2pi
+    tspace = list(linspace(0, 1 + float(step)/2, step))
+    sin1 = [math.sin(t * math.pi) for t in tspace]
+    sin2 = [math.sin(t * 2*math.pi) for t in tspace]
+    cos1 = [math.cos(t * math.pi) for t in tspace]
+    cos2 = [math.cos(t * 2*math.pi) for t in tspace]
+    points = []
+    for theta in tspace:
+        points.append(edgemtx())
+        for phi in tspace:
+            addPoint(points[-1], r*math.sin(phi*math.pi) * math.cos(theta*2*math.pi), r*math.sin(phi*math.pi) * math.sin(theta*2*math.pi), r*math.cos(phi*math.pi))
+    tris = edgemtx()
+    doublerange = [i for i in range(len(tspace)) for j in range(2)]
+    pt_seq = zip([0,1] * len(tspace), doublerange[1:] + [0])
+    print pt_seq
+    for i in range(len(tspace)):
+        rows = [points[i], points[(i + 1) % (len(tspace))]]
+        for j in range(len(pt_seq) - 2):
+            args = []
+            for k in range(j, j + 3):
+                for l in range(3):
+                    args.append(rows[pt_seq[k][0]][l][pt_seq[k][1]])
+            addTriangle(tris, *args)
+    return tris
+
+
 def addTriangle(m, *args):
     assert len(args) == 9
     for i in range(0, 9, 3):
         addPoint(m, *args[i : i+3])
 
-def drawEdges(m, image, color=(255, 0, 0)):  # draws the edges to an image
+def drawEdges(m, image, color=(0, 0, 0)):  # draws the edges to an image
     for i in range(0, len(m[0]) - 1, 2):
         lin = line(m[0][i], m[1][i], m[0][i + 1], m[1][i + 1])
         coloredlin = [xy + (color,) for xy in lin]
         image.setPixels(coloredlin)
 
-def drawTriangles(m, image, color=(255, 0, 0), bordercol=(255,255,255)):
+def drawTriangles(m, image, wireframe=False, color=(255, 0, 0), bordercol=(0, 0, 0), hasBorder=True, culling=True):
     triangles = []
     for i in range(0, len(m[0]) - 2, 3):
-        triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], sum(m[2][i : i+3])])
-    ordTris = sorted(triangles, key=lambda l: l[6])
+        triangles.append([m[0][i], m[1][i], m[0][i + 1], m[1][i + 1], m[0][i + 2], m[1][i + 2], m[2][i], m[2][i + 1], m[2][i + 2]])
+    ordTris = sorted(triangles, key=lambda l: l[6]+l[7]+l[8])
     for t in ordTris:
-        tri = triangle(*t[:6])
-        border = line(*t[:4])
-        border.extend(line(*t[2:6]))
-        border.extend(line(*t[:2] + t[4:6]))
-        coloredtri = [xy + (color,) for xy in tri] + [xy + (bordercol,) for xy in border]
-        image.setPixels(coloredtri)
+        if culling:
+            x12 = t[0] - t[2]
+            y12 = t[1] - t[3]
+            x23 = t[0] - t[4]
+            y23 = t[1] - t[5]
+            if x12 * y23 - x23 * y12 <= 0:
+                continue
+        if not wireframe:
+            tri = triangle.triangle(*t[:6])
+            coloredtri = [xy + (color,) for xy in tri]
+        else:
+            coloredtri = []
+        if hasBorder:
+            border = line(*t[:4])
+            border.extend(line(*t[2:6]))
+            border.extend(line(*t[:2] + t[4:6]))
+            coloredtri += [xy + (bordercol,) for xy in border]
+            image.setPixels(coloredtri)
+    
 
+            
 def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
     mcols = edgemtx() + [[]]
     for m, col in ms:
@@ -64,13 +178,14 @@ def drawColoredTriangles(ms, image, bordercol=(255, 255, 255)):
         triangles.append([mcols[0][i], mcols[1][i], mcols[0][i + 1], mcols[1][i + 1], mcols[0][i + 2], mcols[1][i + 2], sum(mcols[2][i : i+3]), mcols[4][i]])
     ordTris = sorted(triangles, key=lambda l: l[6])
     for t in ordTris:
-        tri = triangle(*t[:6])
+        tri =triangle.triangle(*t[:6])
         border = line(*t[:4])
         border.extend(line(*t[2:6]))
         border.extend(line(*t[:2] + t[4:6]))
         coloredtri = [xy + (t[7],) for xy in tri] + [xy + (bordercol,) for xy in border]
         image.setPixels(coloredtri)
-
+    
+        
 def mtxTest1():
     m1 = [[2, 2, 3], [3, 2, 2]]
     m2 = [[1, 5], [6.5, 4], [1, -0.7]]
@@ -153,4 +268,16 @@ def circleTest2():
             return 250 + 100 * math.cos(t * 2 * math.pi) * costheta
         
 if __name__ == '__main__':
-    circleTest1()
+    import transform
+    
+    m = transform.T(250,250,0)*transform.R('x', 30)*transform.R('y', 30)*sphere(200, .05)
+    mat = transform.T(250, 250, 0) * transform.R('y', 5) * transform.T(-250, -250, 0)
+    for i in range(72):
+        img = Image(500,500)
+        drawTriangles(m, img)
+        m = mat * m
+        print i, 'iter'
+        img.savePpm('sphere/%d.ppm' % (i))
+    
+
+    
